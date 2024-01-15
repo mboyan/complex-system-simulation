@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from scipy.spatial.distance import cdist
 import multiprocessing as mp
 
@@ -11,24 +12,28 @@ from IPython.display import HTML
 from itertools import product
 
 class RandomIntStream:
-    """A class which generates a random stream of integers of growing size.
-    The series grows whenever a higher index than the current maximum is supplied
+    """A class which generates a random stream of integers of size max_length
+    and switches to a different seed if the stream is queried with an out-of-bounds index
     """
-    def __init__(self, low, high, rng, n_start):
+    def __init__(self, low, high, max_length, init_seed=0):
         self.low = low
         self.high = high
-        self.rng = rng
-        self.generated_ints = self.rng.integers(self.low, self.high, size=n_start)
-        self.n_max = n_start
+        # self.generated_ints = self.rng.integers(self.low, self.high, size=max_length)
+        self.n_max = max_length
+        self.seed = init_seed
 
     def get(self, n):
-        if n < self.n_max:
-            return self.generated_ints[n]
-        else:
-            # ARRAY BELOW GETS TOO BIG FOR MEMORY!!!!!
-            self.generated_ints = np.concatenate((self.generated_ints, self.rng.integers(self.low, self.high, size=n - self.n_max + 1)))
-            self.n_max = n
-            return self.generated_ints[n]
+        self.seed = int(math.floor(n / self.n_max))
+        self.rng = np.random.default_rng(self.seed)
+        self.generated_ints = self.rng.integers(self.low, self.high, size=int(n%self.n_max))
+        return self.generated_ints[-1]
+        # if n < self.n_max:
+        #     return self.generated_ints[n]
+        # else:
+        #     # ARRAY BELOW GETS TOO BIG FOR MEMORY!!!!!
+        #     self.generated_ints = np.concatenate((self.generated_ints, self.rng.integers(self.low, self.high, size=n - self.n_max + 1)))
+        #     self.n_max = n
+        #     return self.generated_ints[n]
 
 
 # def unique_random_ints(n, int_max):
@@ -242,8 +247,7 @@ def run_ca_from_quiescent(quiescent_indices, n_steps, n_dims, n_states, space_si
     # print(step_configs[0])
 
     # Create a default random generator
-    rng = np.random.default_rng()
-    rand_int_stream = RandomIntStream(1, n_states, rng, 100)
+    rand_int_stream = RandomIntStream(1, n_states, 1e6)
 
     for i in range(1, n_steps):
 
@@ -300,8 +304,7 @@ def run_ca_from_lambda(langton_lambda, n_steps, n_dims, n_states, space_size, re
     # print(step_configs[0])
 
     # Create a default random generator
-    rng = np.random.default_rng()
-    rand_int_stream = RandomIntStream(1, n_states, rng, 100)
+    rand_int_stream = RandomIntStream(1, n_states, 1e9)
 
     # Create empty set for storing quiescent indices
     quiescent_indices = set()
@@ -351,11 +354,11 @@ def run_ca_from_lambda(langton_lambda, n_steps, n_dims, n_states, space_size, re
 def main():
 
     # CA parameters
-    n_steps = 2
-    n_dims = 3
+    n_steps = 8
+    n_dims = 2
     n_states = 3
-    space_size = 5
-    langton_lambda = 0.5
+    space_size = 8
+    langton_lambda = 0.75
     show_evolution = True
     
     # ca_rule = construct_ca_rule_random(n_dims, n_states, langton_lambda)
