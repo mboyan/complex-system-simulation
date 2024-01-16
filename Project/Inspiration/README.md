@@ -27,6 +27,7 @@ Bacterial growth: https://github.com/mboyan/complex-system-simulation/blob/main/
 
 Coral growth:
 - https://github.com/mboyan/complex-system-simulation/blob/main/Project/Inspiration/ModelsOfCoralGrowth.pdf
+- https://github.com/mboyan/complex-system-simulation/blob/main/Project/Inspiration/kaandorp-et-al-2005-morphogenesis-of-the-branching-reef-coral-madracis-mirabilis.pdf
 
 ## Modelling Sand Dune Formation 🏖️
 
