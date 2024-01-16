@@ -11,7 +11,7 @@ Furthermore, Artificial Life can have practical application in domains like soft
 
 Below is some research based on multi-neighbourhood, smooth Cellular Automata producing interesting self-replicating formations:
 
-[![Lenia](https://img.youtube.com/vi/<7-97RhAZhXI>/hqdefault.jpg)](https://www.youtube.com/watch?v=7-97RhAZhXI)
+[![Lenia](https://img.youtube.com/vi/7-97RhAZhXI/hqdefault.jpg)](https://youtu.be/7-97RhAZhXI)
 
 See paper here: https://github.com/mboyan/complex-system-simulation/blob/main/Project/Inspiration/Lenia.pdf
 
