@@ -100,7 +100,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     particles_out[mask] += perturbations[mask]
 
     # Wrap around or regenerate
-    if np.any(np.array(periodic)):
+    if not np.all(np.array(periodic)):
         particles_regen = regen_particles(lattice, particles_in.shape[0])
     
     for i, p in enumerate(periodic):
@@ -117,7 +117,7 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
+def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True, True), moore=False):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -126,11 +126,14 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
         lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
         prop_particles (float) - a number between 0 and 1 determining the percentage / density of particles on the lattice;
             if None, the particles will not be regenerated to compensate the proportion
+        periodic (tuple of bool) - defines whether the lattice is periodic in each dimension, number of elements must correspond to dimensions
         moore (bool) - determine whether the neighbourhood is Moore or otherwise von Neumann; defaults to False
     """
 
     lattice_dims = np.ndim(lattice)
     assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'
+    assert len(periodic) == lattice_dims, 'dimension mismatch between periodicity labels and lattice'
+    assert len(periodic) == particles.shape[1], 'dimension mismatch between periodicity labels and particles'
 
     # Define particle neighbourhoods (Moore)
     nbrs = list(product([0, 1, -1], repeat=lattice_dims))
@@ -143,6 +146,10 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
     nbrs = np.array(nbrs)
     shifted_lattices = np.array([np.roll(lattice, shift, tuple(range(lattice_dims))) for shift in nbrs])
     summed_nbrs_lattice = np.sum(shifted_lattices, axis=0)
+
+    # Zero edge rows of shifted lattices if not periodic
+    if not np.all(np.array(periodic)):
+        pass
     
     # Check if particles are neighbouring seeds
     new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > 0)
