@@ -18,7 +18,7 @@ def animate_lattice_2D(lattice_data_frames, interval=100):
     # Set up figure and axis
     fig = plt.figure()
     # fig = plt.figure(figsize=(lattice_data_frames.shape[1] * cell_size, lattice_data_frames.shape[2] * cell_size))
-    img = plt.imshow(np.random.randint(2, size=((lattice_data_frames.shape[1], lattice_data_frames.shape[2]))))
+    img = plt.imshow(np.random.randint(2, size=((lattice_data_frames.shape[1], lattice_data_frames.shape[2]))), cmap = 'bwr')
 
     # Animation update function
     def animate(i):
@@ -26,5 +26,6 @@ def animate_lattice_2D(lattice_data_frames, interval=100):
         return img,
 
     anim = animation.FuncAnimation(fig, animate, frames=n_frames, interval=interval, blit=True)
+    plt.axis('off')
 
     return HTML(anim.to_html5_video())

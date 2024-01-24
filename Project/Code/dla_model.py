@@ -86,7 +86,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     lattice_size = lattice.shape[0]
 
     # Define Moore neighbourhood
-    moves = list(product([0, 1, -1], repeat=lattice_dims))
+    moves = [step for step in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(step) != 0]
     
     # Reduce to von Neumann neighbourhood
     if not moore:
@@ -130,10 +130,11 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
     """
 
     lattice_dims = np.ndim(lattice)
+    lattice_size = lattice.shape[0]
     assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'
 
     # Define particle neighbourhoods (Moore)
-    nbrs = [neighbor for neighbor in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(neighbor) != 0 and neighbor[0] != 1]
+    nbrs = [neighbor for neighbor in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(neighbor) != 0]
 
     # Reduce to von Neumann neighbourhood
     if not moore:
@@ -142,10 +143,17 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
     # Shift lattice by neighbourhoods
     nbrs = np.array(nbrs)
     shifted_lattices = np.array([np.roll(lattice, shift, tuple(range(lattice_dims))) for shift in nbrs])
+
+    weights = np.abs(nbrs[:,0] - 1)
+    weights = np.repeat(weights, lattice_size ** lattice_dims)
+    weights = np.reshape(weights, shifted_lattices.shape)
+    shifted_lattices *= weights
+
     summed_nbrs_lattice = np.sum(shifted_lattices, axis=0)
-    
+
     # Check if particles are neighbouring seeds
-    new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > 0)
+    u = np.random.uniform()
+    new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > np.max(weights) * u)
 
     # Update lattice (add seeds)
     lattice[tuple(particles[new_seed_indices].T)] = 1
