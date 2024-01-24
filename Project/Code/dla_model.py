@@ -23,7 +23,7 @@ def init_lattice(lattice_size, seed_coords):
     return lattice
 
 
-def init_particles(lattice, prop_particles):
+def init_particles(lattice, prop_particles, gravity = False):
     """
     Creates an array of n-dimensional particles where the number of particles
     is determined by a proportion from an input lattice size.
@@ -41,13 +41,18 @@ def init_particles(lattice, prop_particles):
     # Determine number of particles=
     n_particles = int(empty_locs.shape[0] * prop_particles)
 
-    # Initialize particles randomly wherever there are no seeds
-    init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
+    if gravity:
+        # Initialize particles in the top of the grid
+        top = 2 * prop_particles
+        init_coords = empty_locs[np.random.choice(int(top * empty_locs.shape[0]), size=n_particles, replace=False)]
+    else:
+        # Initialize particles randomly wherever there are no seeds
+        init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
 
     return init_coords
 
 
-def regen_particles(lattice, n_particles):
+def regen_particles(lattice, n_particles, gravity = False):
     """
     Randomly regenerate a specific number of particles.
     inputs:
@@ -60,15 +65,20 @@ def regen_particles(lattice, n_particles):
 
     assert n_particles <= empty_locs.shape[0], 'too many particles to regenerate'
 
-    # Initialize particles randomly wherever there are no seeds
-    regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
+    if gravity:
+        # Initialize particles in the top of the grid
+        # regen_coords = empty_locs[np.random.choice(np.mod(empty_locs.shape[0], int(3 * np.ndim(lattice))), size=n_particles, replace=False)]
+        pass
+    else:
+        # regenerate particles randomly wherever there are no seeds
+        regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
 
     return regen_coords
 
 
 # ===== Particle movement functions =====
 
-def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=False):
+def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=False, gravity = False):
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
@@ -92,9 +102,18 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     if not moore:
         moves = [m for m in moves if abs(sum(m)) == 1]
 
-    # Perturb particles (only if they are not on an occupied site)
     moves = np.array(moves)
-    perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
+
+    # Perturb particles (only if they are not on an occupied site)
+    if gravity:
+        weights = np.abs(moves[:,0] + 1).astype(float)
+        weights /= weights.sum()
+
+        perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
+        
+    else:
+        perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
+
     mask = lattice[tuple(particles_in.T)] == 0
     particles_out = np.array(particles_in)
     particles_out[mask] += perturbations[mask]
@@ -102,6 +121,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     # Wrap around or regenerate
     if np.any(np.array(periodic)):
         particles_regen = regen_particles(lattice, particles_in.shape[0])
+        # Loes: change still with gravity = gravity
     
     for i, p in enumerate(periodic):
         if p:
