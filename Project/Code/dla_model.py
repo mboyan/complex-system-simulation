@@ -133,7 +133,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
     assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'
 
     # Define particle neighbourhoods (Moore)
-    nbrs = list(product([0, 1, -1], repeat=lattice_dims))
+    nbrs = [neighbor for neighbor in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(neighbor) != 0 and neighbor[0] != 1]
 
     # Reduce to von Neumann neighbourhood
     if not moore:
