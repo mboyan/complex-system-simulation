@@ -140,16 +140,17 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
         nbrs = [n for n in nbrs if abs(sum(n)) == 1]
 
     # Shift lattice by neighbourhoods
-    lattice_shifts = np.array(nbrs)
-    shifted_lattices = np.array([np.roll(lattice, shift, tuple(range(lattice_dims))) for shift in lattice_shifts])
+    nbrs = np.array(nbrs)
+    shifted_lattices = np.array([np.roll(lattice, shift, tuple(range(lattice_dims))) for shift in nbrs])
     summed_nbrs_lattice = np.sum(shifted_lattices, axis=0)
     
     # Check if particles are neighbouring seeds
     new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > 0)
 
-    # Update lattice
+    # Update lattice (add seeds)
     lattice[tuple(particles[new_seed_indices].T)] = 1
 
+    # Compensate particle density
     if prop_particles is not None:
         # Recalculate lattice vacancy
         lattice_vacancy = np.argwhere(lattice == 0)
