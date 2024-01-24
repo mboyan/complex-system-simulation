@@ -66,9 +66,8 @@ def regen_particles(lattice, n_particles, gravity = False):
     assert n_particles <= empty_locs.shape[0], 'too many particles to regenerate'
 
     if gravity:
-        # Initialize particles in the top of the grid
-        # regen_coords = empty_locs[np.random.choice(np.mod(empty_locs.shape[0], int(3 * np.ndim(lattice))), size=n_particles, replace=False)]
-        pass
+        # regenerate particles in the top of the grid
+        regen_coords = empty_locs[np.random.choice( n_particles * 2, size=n_particles, replace=False)]
     else:
         # regenerate particles randomly wherever there are no seeds
         regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
@@ -120,8 +119,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
 
     # Wrap around or regenerate
     if np.any(np.array(periodic)):
-        particles_regen = regen_particles(lattice, particles_in.shape[0])
-        # Loes: change still with gravity = gravity
+        particles_regen = regen_particles(lattice, particles_in.shape[0], gravity = gravity)
     
     for i, p in enumerate(periodic):
         if p:
