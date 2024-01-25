@@ -1,3 +1,7 @@
+"""
+This module contains functions for a single simulation instance of a Diffusion-Limited Aggregation (DLA) model.
+"""
+
 import numpy as np
 from itertools import product
 
@@ -129,6 +133,9 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
         periodic (tuple of bool) - defines whether the lattice is periodic in each dimension, number of elements must correspond to dimensions
         moore (bool) - determine whether the neighbourhood is Moore or otherwise von Neumann; defaults to False
     """
+
+    # Create a copy of the lattice
+    lattice = np.array(lattice)
 
     lattice_dims = np.ndim(lattice)
     assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'

@@ -1,3 +1,7 @@
+"""
+This module contains functions for visualising plots and animations of DLA simulation results.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -30,7 +34,7 @@ def animate_lattice_2D(lattice_data_frames, interval=100):
     return HTML(anim.to_html5_video())
 
 
-def plot_fractal_dimension(n_box_series, scale_inverse_series, coeffs):
+def plot_fractal_dimension(scale_series, n_box_series, coeffs):
     """
     Plots the relationship between N(epsilon) (number of boxes of size epsilon)
     and 1/epsilon (inverse of box size) on a log-log plot, illustrating the analysed fractal dimension
@@ -38,14 +42,15 @@ def plot_fractal_dimension(n_box_series, scale_inverse_series, coeffs):
 
     fig, ax = plt.subplots()
 
-    ax.loglog(n_box_series, scale_inverse_series, marker='o')
-    coeffs = np.exp(coeffs)
-    plot_min = np.min(n_box_series)
-    plot_max = np.max(n_box_series)
-    ax.plot([plot_min, plot_max], [plot_min * coeffs[0] + coeffs[1], plot_max * coeffs[0] + coeffs[1]])
+    ax.loglog(scale_series, n_box_series, marker='o', label='scale-mass relationship')
+    log_scale_series = np.log(scale_series)
+    log_n_boxes_fit = coeffs[0] * log_scale_series + coeffs[1]
+    n_boxes_fit = np.exp(log_n_boxes_fit)
+    ax.loglog(scale_series, n_boxes_fit, linestyle='--', color='red', label=f'regression ($D={coeffs[0]}$)')
 
     ax.set_xlabel("$1/\epsilon$")
     ax.set_ylabel("$N(\epsilon)$")
-    fig.suptitle("Scaling factor of lattice vs number of occupied lattice sites")
+    ax.legend()
+    fig.suptitle("Lattice scaling factor vs number of occupied lattice sites")
 
     plt.show()
