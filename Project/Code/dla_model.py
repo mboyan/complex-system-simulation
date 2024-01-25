@@ -45,6 +45,7 @@ def init_particles(lattice, prop_particles, gravity = False):
         # Initialize particles in the top of the grid
         top = 2 * prop_particles
         init_coords = empty_locs[np.random.choice(int(top * empty_locs.shape[0]), size=n_particles, replace=False)]
+        
     else:
         # Initialize particles randomly wherever there are no seeds
         init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
