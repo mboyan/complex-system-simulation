@@ -67,7 +67,8 @@ def regen_particles(lattice, n_particles, gravity = False):
 
     if gravity:
         # regenerate particles in the top of the grid
-        regen_coords = empty_locs[np.random.choice( n_particles * 2, size=n_particles, replace=False)]
+        regen_coords = empty_locs[np.random.choice(int(0.2 * empty_locs.shape[0]), size=n_particles, replace=False)]
+
     else:
         # regenerate particles randomly wherever there are no seeds
         regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
@@ -77,7 +78,7 @@ def regen_particles(lattice, n_particles, gravity = False):
 
 # ===== Particle movement functions =====
 
-def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=False, gravity = False):
+def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False):
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
@@ -89,7 +90,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     outputs:
         the particle array after one step (numpy.ndarray)
     """
-    assert len(periodic) == particles_in.shape[1], 'dimension mismatch with periodicity tuple'
+    # assert len(periodic) == particles_in.shape[1], 'dimension mismatch with periodicity tuple'
 
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
@@ -116,16 +117,28 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     mask = lattice[tuple(particles_in.T)] == 0
     particles_out = np.array(particles_in)
     particles_out[mask] += perturbations[mask]
-
-    # Wrap around or regenerate
-    if np.any(np.array(periodic)):
-        particles_regen = regen_particles(lattice, particles_in.shape[0], gravity = gravity)
     
-    for i, p in enumerate(periodic):
-        if p:
-            particles_out[:, i] = np.mod(particles_out[:, i], lattice_size)
-        else:
-            particles_out[:, i] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1), particles_regen[:, i], particles_out[:, i])
+    # Wrap around or regenerate (right, :,1, x) (left, :,0, y)
+    particles_out[:,1] = np.mod(particles_out[:, 1], lattice_size)
+
+    # Regenerate at top when bottom or top boundary
+    particles_regen = regen_particles(lattice, particles_in.shape[0], gravity = gravity)
+    # particles_out[:, 0] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=0), particles_regen[:, 0], particles_out[:, 0])
+    # particles_out = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=0), particles_regen[:, 0], particles_out[:, 0])
+
+    # Find particles that need to be regenerated
+    regen_indices = np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1)
+
+    # Randomly select new coordinates for these particles
+    new_coords = np.random.choice(len(particles_regen), size=np.sum(regen_indices))
+    particles_out[regen_indices] = np.array(particles_regen)[new_coords]
+
+
+    # for i, p in enumerate(periodic):
+    #     if p:
+    #         particles_out[:, i] = np.mod(particles_out[:, i], lattice_size)
+    #     else:
+    #         particles_out[:, i] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1), particles_regen[:, i], particles_out[:, i])
 
     return particles_out
 
