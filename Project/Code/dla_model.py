@@ -22,6 +22,27 @@ def init_lattice(lattice_size, seed_coords):
 
     return lattice
 
+def init_obstacle_lattice(lattice_size, seed_coords, rectangle=False):
+    """
+    Create lattice where 0 determines free space and 1 determines an obstacle. 
+    inputs:
+        rectangle (tuple): two coordinates that determine the two needed points for a rectangle
+    """
+    lattice_dims = seed_coords.shape[1]
+    assert lattice_dims > 1
+
+    obstacle_lattice = np.zeros(np.repeat(lattice_size, lattice_dims))
+
+    if rectangle:
+        x1,x2,y1,y2 = rectangle
+        obstacle_lattice[x1:x2+1, y1:y2+1] = 1
+
+    if np.any(obstacle_lattice[tuple(seed_coords.T)] == 1):
+        print("At least one seed is inside an obstacle")
+
+    return obstacle_lattice
+    
+
 
 def init_particles(lattice, prop_particles, gravity = False):
     """
@@ -45,7 +66,7 @@ def init_particles(lattice, prop_particles, gravity = False):
         # Initialize particles in the top of the grid
         top = 2 * prop_particles
         init_coords = empty_locs[np.random.choice(int(top * empty_locs.shape[0]), size=n_particles, replace=False)]
-        
+
     else:
         # Initialize particles randomly wherever there are no seeds
         init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
