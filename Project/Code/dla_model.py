@@ -135,7 +135,7 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, gravity = False):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -188,7 +188,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False):
         inactive_particle_indices = np.flatnonzero(~mask)
         n_particles_deficit = n_particles_potential - active_particle_indices.shape[0]
         if n_particles_deficit > 0:
-            particles_regen = regen_particles(lattice, n_particles_deficit)
+            particles_regen = regen_particles(lattice, n_particles_deficit, gravity = gravity)
             particles[inactive_particle_indices[:n_particles_deficit]] = particles_regen
 
     return lattice, particles

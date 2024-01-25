@@ -18,7 +18,7 @@ def animate_lattice_2D(lattice_data_frames, interval=100):
     # Set up figure and axis
     fig = plt.figure()
     # fig = plt.figure(figsize=(lattice_data_frames.shape[1] * cell_size, lattice_data_frames.shape[2] * cell_size))
-    img = plt.imshow(np.random.randint(2, size=((lattice_data_frames.shape[1], lattice_data_frames.shape[2]))), cmap = 'bwr')
+    img = plt.imshow(np.random.randint(2, size=((lattice_data_frames.shape[1], lattice_data_frames.shape[2]))), cmap = 'tab20b')
 
     # Animation update function
     def animate(i):
