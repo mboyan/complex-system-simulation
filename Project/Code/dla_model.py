@@ -26,22 +26,26 @@ def init_obstacle_lattice(lattice_size, seed_coords, rectangle=False):
     """
     Create lattice where 0 determines free space and 1 determines an obstacle. 
     inputs:
-        rectangle (tuple): two coordinates that determine the two needed points for a rectangle
+        rectangle (tuple): four points (x1,x2,y1,y2) that determine the two needed points for a rectangle
     output:
         the obstacle lattice (np.ndarray) and the coordinates of the obstacle (np.ndarray)
     """
+    # Infer dimensions from number of seed coordinates
     lattice_dims = seed_coords.shape[1]
     assert lattice_dims > 1
 
     obstacle_lattice = np.zeros(np.repeat(lattice_size, lattice_dims))
 
+    # Make rectangle obstacle using four points
     if rectangle:
         x1,x2,y1,y2 = rectangle
         obstacle_lattice[x1:x2+1, y1:y2+1] = 1
 
+    # Check if there is a seed in the obstacle
     if np.any(obstacle_lattice[tuple(seed_coords.T)] == 1):
         print("At least one seed is inside an obstacle")
 
+    # Maybe not necessary, might delete later
     obstacle_locs = np.argwhere(obstacle_lattice == 1)
 
     return obstacle_lattice, obstacle_locs
@@ -91,6 +95,7 @@ def regen_particles(lattice, n_particles, gravity = False, obstacle=False):
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
+    # Only generates particles outside obstacle
     if obstacle:
         obstacle_lattice, _ = obstacle
         empty_locs = np.argwhere((lattice == 0) & (obstacle_lattice == 0))
@@ -147,9 +152,6 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, 
         perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
 
     mask = lattice[tuple(particles_in.T)] == 0
-    if obstacle:
-        obstacle_lattice, obstacle_locs = obstacle
-        mask = (lattice[tuple(particles_in.T)] == 0) & (obstacle_lattice[tuple(particles_in.T)] == 0)
     particles_out = np.array(particles_in)
     particles_out[mask] += perturbations[mask]
     
@@ -166,6 +168,12 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, 
     new_coords = np.random.choice(len(particles_regen), size=np.sum(regen_indices))
     particles_out[regen_indices] = np.array(particles_regen)[new_coords]
 
+    # For particles that have moved into an obstacle, revert them to their original positions.
+    if obstacle:
+        obstacle_lattice, _ = obstacle
+        in_obstacle = obstacle_lattice[tuple(particles_out[mask].T)]
+        particles_out[mask] = np.where(np.repeat(in_obstacle, 2).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
+    
     return particles_out
 
 
