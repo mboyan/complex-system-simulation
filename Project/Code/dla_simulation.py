@@ -77,19 +77,12 @@ def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=No
         
         # Calculate maximum radius of DLA structure
         if track_radius and step > 0:
+            # Check difference between new state and old state
             new_aggregate_indices = np.argwhere(new_lattice - current_lattice)
-            # print("kekekekek")
-            # print(np.sum(new_lattice))
-            # print(np.sum(current_lattice))
             if new_aggregate_indices.shape[0] > 0:
-                # print("foo")
                 seed_compare = np.repeat(seeds[0], new_aggregate_indices.shape[0])
                 seed_compare = seed_compare.reshape(new_aggregate_indices.shape)
-                # print(new_aggregate_indices)
-                # print(seed_compare)
-                # print(np.linalg.norm(new_aggregate_indices - seed_compare, axis=1).shape)
                 new_radius = np.max(np.linalg.norm(new_aggregate_indices - seed_compare, axis=1))
-                # print(new_radius)
                 if new_radius > max_radius:
                     max_radius = new_radius
             dla_radii[step] = max_radius
@@ -140,8 +133,6 @@ def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series,
 
     # Initialize dataframe for storing simulation results
     sim_results = []
-    # pd.DataFrame(columns=['lattice_size', 'max_timesteps', 'seeds', 'particle_density', 'target_mass',
-    #                                     'dim_box_series', 'scale_series', 'n_box_series', 'coeffs', 'evol_ref'])
     dla_evolutions = {'lattice_frames': [], 'particles_frames': []}
     
     param_combos = product(lattice_size_series, max_timesteps_series, seeds_series, particle_density_series, target_mass_series)
@@ -183,8 +174,6 @@ def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series,
                 dim_box_series, scale_series, n_box_series, coeffs = cm.fractal_dimension(lattice_frames[-1], lattice_size)
 
             # Save simulation results
-            # print({'lattice_size': lattice_size, 'max_timesteps': max_timesteps, 'seeds': list(seeds), 'particle_density': particle_density, 'target_mass': target_mass,
-            #                  'dim_box_series': list(dim_box_series), 'scale_series': list(scale_series), 'n_box_series': list(n_box_series), 'coeffs': list(coeffs), 'evol_ref': evol_ref})
             new_data = {'lattice_size': lattice_size, 'max_timesteps': max_timesteps, 'seeds': list(seeds), 'particle_density': particle_density, 'target_mass': target_mass,
                              'dim_box_series': dim_box_series, 'scale_series': scale_series, 'n_box_series': n_box_series, 'coeffs': coeffs, 'evol_ref': evol_ref}
             sim_results.append(new_data)
