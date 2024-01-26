@@ -50,9 +50,9 @@ def init_obstacle_lattice(lattice_size, seed_coords, rectangle=False):
         print("At least one seed is inside an obstacle")
 
     # Maybe not necessary, might delete later
-    obstacle_locs = np.argwhere(obstacle_lattice == 1)
+    # obstacle_locs = np.argwhere(obstacle_lattice == 1)
 
-    return obstacle_lattice, obstacle_locs
+    return obstacle_lattice
     
 
 
@@ -70,9 +70,8 @@ def init_particles(lattice, prop_particles, gravity = False, obstacle = False):
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
-    if obstacle:
-        obstacle_lattice, _ = obstacle
-        empty_locs = np.argwhere((lattice == 0) & (obstacle_lattice == 0))
+    if type(obstacle) == np.ndarray:
+        empty_locs = np.argwhere((lattice == 0) & (obstacle == 0))
 
     # Determine number of particles=
     n_particles = int(empty_locs.shape[0] * prop_particles)
@@ -100,9 +99,8 @@ def regen_particles(lattice, n_particles, gravity = False, obstacle=False):
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
     # Only generates particles outside obstacle
-    if obstacle:
-        obstacle_lattice, _ = obstacle
-        empty_locs = np.argwhere((lattice == 0) & (obstacle_lattice == 0))
+    if type(obstacle) == np.ndarray:
+        empty_locs = np.argwhere((lattice == 0) & (obstacle == 0))
 
     assert n_particles <= empty_locs.shape[0], 'too many particles to regenerate'
 
@@ -173,9 +171,8 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, 
     particles_out[regen_indices] = np.array(particles_regen)[new_coords]
 
     # For particles that have moved into an obstacle, revert them to their original positions.
-    if obstacle:
-        obstacle_lattice, _ = obstacle
-        in_obstacle = obstacle_lattice[tuple(particles_out[mask].T)]
+    if type(obstacle) == np.ndarray:
+        in_obstacle = obstacle[tuple(particles_out[mask].T)]
         particles_out[mask] = np.where(np.repeat(in_obstacle, 2).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
     
     return particles_out
