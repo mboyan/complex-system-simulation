@@ -26,8 +26,37 @@ def init_lattice(lattice_size, seed_coords):
 
     return lattice
 
+def init_obstacle_lattice(lattice_size, seed_coords, rectangle=False):
+    """
+    Create lattice where 0 determines free space and 1 determines an obstacle. 
+    inputs:
+        rectangle (tuple): four points (x1,x2,y1,y2) that determine the two needed points for a rectangle
+    output:
+        the obstacle lattice (np.ndarray) and the coordinates of the obstacle (np.ndarray)
+    """
+    # Infer dimensions from number of seed coordinates
+    lattice_dims = seed_coords.shape[1]
+    assert lattice_dims > 1
 
-def init_particles(lattice, prop_particles, gravity = False):
+    obstacle_lattice = np.zeros(np.repeat(lattice_size, lattice_dims))
+
+    # Make rectangle obstacle using four points
+    if rectangle:
+        x1,x2,y1,y2 = rectangle
+        obstacle_lattice[x1:x2+1, y1:y2+1] = 1
+
+    # Check if there is a seed in the obstacle
+    if np.any(obstacle_lattice[tuple(seed_coords.T)] == 1):
+        print("At least one seed is inside an obstacle")
+
+    # Maybe not necessary, might delete later
+    obstacle_locs = np.argwhere(obstacle_lattice == 1)
+
+    return obstacle_lattice, obstacle_locs
+    
+
+
+def init_particles(lattice, prop_particles, gravity = False, obstacle = False):
     """
     Creates an array of n-dimensional particles where the number of particles
     is determined by a proportion from an input lattice size.
@@ -41,6 +70,9 @@ def init_particles(lattice, prop_particles, gravity = False):
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
+    if obstacle:
+        obstacle_lattice, _ = obstacle
+        empty_locs = np.argwhere((lattice == 0) & (obstacle_lattice == 0))
 
     # Determine number of particles=
     n_particles = int(empty_locs.shape[0] * prop_particles)
@@ -49,6 +81,7 @@ def init_particles(lattice, prop_particles, gravity = False):
         # Initialize particles in the top of the grid
         top = 2 * prop_particles
         init_coords = empty_locs[np.random.choice(int(top * empty_locs.shape[0]), size=n_particles, replace=False)]
+
     else:
         # Initialize particles randomly wherever there are no seeds
         init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
@@ -56,7 +89,7 @@ def init_particles(lattice, prop_particles, gravity = False):
     return init_coords
 
 
-def regen_particles(lattice, n_particles, gravity = False):
+def regen_particles(lattice, n_particles, gravity = False, obstacle=False):
     """
     Randomly regenerate a specific number of particles.
     inputs:
@@ -66,12 +99,17 @@ def regen_particles(lattice, n_particles, gravity = False):
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
+    # Only generates particles outside obstacle
+    if obstacle:
+        obstacle_lattice, _ = obstacle
+        empty_locs = np.argwhere((lattice == 0) & (obstacle_lattice == 0))
 
     assert n_particles <= empty_locs.shape[0], 'too many particles to regenerate'
 
     if gravity:
         # regenerate particles in the top of the grid
-        regen_coords = empty_locs[np.random.choice( n_particles * 2, size=n_particles, replace=False)]
+        regen_coords = empty_locs[np.random.choice(int(0.2 * empty_locs.shape[0]), size=n_particles, replace=False)]
+
     else:
         # regenerate particles randomly wherever there are no seeds
         regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
@@ -81,7 +119,7 @@ def regen_particles(lattice, n_particles, gravity = False):
 
 # ===== Particle movement functions =====
 
-def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=False, gravity = False):
+def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, obstacle=False):
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
@@ -93,7 +131,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     outputs:
         the particle array after one step (numpy.ndarray)
     """
-    assert len(periodic) == particles_in.shape[1], 'dimension mismatch with periodicity tuple'
+    # assert len(periodic) == particles_in.shape[1], 'dimension mismatch with periodicity tuple'
 
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
@@ -120,17 +158,26 @@ def move_particles_diffuse(particles_in, lattice, periodic=(True, True), moore=F
     mask = lattice[tuple(particles_in.T)] == 0
     particles_out = np.array(particles_in)
     particles_out[mask] += perturbations[mask]
-
-    # Wrap around or regenerate
-    if not np.all(np.array(periodic)):
-        particles_regen = regen_particles(lattice, particles_in.shape[0], gravity = gravity)
     
-    for i, p in enumerate(periodic):
-        if p:
-            particles_out[:, i] = np.mod(particles_out[:, i], lattice_size)
-        else:
-            particles_out[:, i] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1), particles_regen[:, i], particles_out[:, i])
+    # Wrap around or regenerate (right, :,1, x) (left, :,0, y)
+    particles_out[:,1] = np.mod(particles_out[:, 1], lattice_size)
 
+    # Regenerate at top when bottom or top boundary
+    particles_regen = regen_particles(lattice, particles_in.shape[0], gravity = gravity, obstacle=obstacle)
+
+    # Find particles that need to be regenerated
+    regen_indices = np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1)
+
+    # Randomly select new coordinates for these particles
+    new_coords = np.random.choice(len(particles_regen), size=np.sum(regen_indices))
+    particles_out[regen_indices] = np.array(particles_regen)[new_coords]
+
+    # For particles that have moved into an obstacle, revert them to their original positions.
+    if obstacle:
+        obstacle_lattice, _ = obstacle
+        in_obstacle = obstacle_lattice[tuple(particles_out[mask].T)]
+        particles_out[mask] = np.where(np.repeat(in_obstacle, 2).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
+    
     return particles_out
 
 
@@ -139,7 +186,7 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True, True), moore=False, gravity = False):
+def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True, True), moore=False, gravity = False, obstacle=False):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -202,7 +249,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
         inactive_particle_indices = np.flatnonzero(~mask)
         n_particles_deficit = n_particles_potential - active_particle_indices.shape[0]
         if n_particles_deficit > 0:
-            particles_regen = regen_particles(lattice, n_particles_deficit, gravity = gravity)
+            particles_regen = regen_particles(lattice, n_particles_deficit, gravity = gravity, obstacle=obstacle)
             particles[inactive_particle_indices[:n_particles_deficit]] = particles_regen
 
     return lattice, particles
