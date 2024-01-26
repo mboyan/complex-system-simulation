@@ -117,7 +117,7 @@ def regen_particles(lattice, n_particles, gravity = False, obstacle=False):
 
 # ===== Particle movement functions =====
 
-def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, obstacle=False):
+def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, obstacle=False, flow = None):
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
@@ -144,12 +144,14 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, 
     moves = np.array(moves)
 
     # Perturb particles (only if they are not on an occupied site)
-    if gravity:
-        weights = np.abs(moves[:,0] + 1).astype(float)
+
+    if flow is not None:
+        assert -1 <= flow[0] <= 1 and -1 <= flow[1] <= 1, 'flow should be between -1 and 1'
+        weights = np.linalg.norm(moves + flow, axis=1)
         weights /= weights.sum()
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
-        
+
     else:
         perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
 
@@ -183,7 +185,7 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True, True), moore=False, gravity = False, obstacle=False):
+def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True, True), moore=False, gravity = False, obstacle=False, sun = 1):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -216,7 +218,12 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
     nbrs = np.array(nbrs)
     shifted_lattices = np.array([np.roll(lattice, shift, tuple(range(lattice_dims))) for shift in nbrs])
 
-    weights = np.abs(nbrs[:,0] - 1)
+    # make sure there is no attachment in the upper row
+    shifted_lattices[-2,0,:] *= 0
+
+    sun_vec = [sun, 0]
+    assert 0 <= sun <= 1, 'sun is a proportion parameter'
+    weights = np.linalg.norm(nbrs - sun_vec, axis = 1)
     weights = np.repeat(weights, lattice_size ** lattice_dims)
     weights = np.reshape(weights, shifted_lattices.shape)
     shifted_lattices *= weights
@@ -269,4 +276,3 @@ def particles_to_lattice(particles, lattice_size):
     particle_lattice[tuple(particles.T)] = 1
 
     return particle_lattice
-
