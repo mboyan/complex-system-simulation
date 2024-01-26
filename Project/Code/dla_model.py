@@ -79,7 +79,7 @@ def regen_particles(lattice, n_particles, gravity = False):
 
 # ===== Particle movement functions =====
 
-def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False):
+def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, flow = None):
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
@@ -106,12 +106,14 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False):
     moves = np.array(moves)
 
     # Perturb particles (only if they are not on an occupied site)
-    if gravity:
-        weights = np.abs(moves[:,0] + 1).astype(float)
+
+    if flow is not None:
+        assert -1 <= flow[0] <= 1 and -1 <= flow[1] <= 1, 'flow should be between -1 and 1'
+        weights = np.linalg.norm(moves + flow, axis=1)
         weights /= weights.sum()
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
-        
+
     else:
         perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
 
@@ -124,22 +126,13 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False):
 
     # Regenerate at top when bottom or top boundary
     particles_regen = regen_particles(lattice, particles_in.shape[0], gravity = gravity)
-    # particles_out[:, 0] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=0), particles_regen[:, 0], particles_out[:, 0])
-    # particles_out = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=0), particles_regen[:, 0], particles_out[:, 0])
-
+    
     # Find particles that need to be regenerated
     regen_indices = np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1)
 
     # Randomly select new coordinates for these particles
     new_coords = np.random.choice(len(particles_regen), size=np.sum(regen_indices))
     particles_out[regen_indices] = np.array(particles_regen)[new_coords]
-
-
-    # for i, p in enumerate(periodic):
-    #     if p:
-    #         particles_out[:, i] = np.mod(particles_out[:, i], lattice_size)
-    #     else:
-    #         particles_out[:, i] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1), particles_regen[:, i], particles_out[:, i])
 
     return particles_out
 
@@ -149,7 +142,7 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False, gravity = False):
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, gravity = False, sun = 1):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -176,7 +169,12 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, gr
     nbrs = np.array(nbrs)
     shifted_lattices = np.array([np.roll(lattice, shift, tuple(range(lattice_dims))) for shift in nbrs])
 
-    weights = np.abs(nbrs[:,0] - 1)
+    # make sure there is no attachment in the upper row
+    shifted_lattices[-2,0,:] *= 0
+
+    sun_vec = [sun, 0]
+    assert 0 <= sun <= 1, 'sun is a proportion parameter'
+    weights = np.linalg.norm(nbrs - sun_vec, axis = 1)
     weights = np.repeat(weights, lattice_size ** lattice_dims)
     weights = np.reshape(weights, shifted_lattices.shape)
     shifted_lattices *= weights
@@ -225,4 +223,3 @@ def particles_to_lattice(particles, lattice_size):
     particle_lattice[tuple(particles.T)] = 1
 
     return particle_lattice
-
