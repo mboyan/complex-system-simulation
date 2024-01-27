@@ -26,24 +26,36 @@ def init_lattice(lattice_size, seed_coords):
 
     return lattice
 
-def init_obstacle_lattice(lattice_size, seed_coords, rectangle=False):
+def init_obstacle_lattice(lattice_size, boxes=None, seed_coords=None):
     """
     Create lattice where 0 determines free space and 1 determines an obstacle. 
     inputs:
-        rectangle (tuple): four points (x1,x2,y1,y2) that determine the two needed points for a rectangle
+        lattice_size (int) - the size of the lattice along one dimension
+        boxes (np.ndarray) - a 2D array containing the diagonal corner points of rectangular obstacles in a flattened form (e.g. x1, x2, y1, y2, ...). Defaults to None
+        seed_coords (np.ndarray) - the lattice coordinates of the initial seeds, used to check if seeds are in obstacles; defaults to None
     output:
         the obstacle lattice (np.ndarray) and the coordinates of the obstacle (np.ndarray)
     """
+
     # Infer dimensions from number of seed coordinates
     lattice_dims = seed_coords.shape[1]
     assert lattice_dims > 1
 
+    if boxes is not None:
+        assert np.ndim(boxes) == 2, 'box regions must be an np.ndarray with 2 dimensions'
+        assert boxes.shape[1] == lattice_dims * 2, 'each box region must be a tuple of 2*lattice_dims points (e.g. x1, x2, y1, y2, ...)'
+
     obstacle_lattice = np.zeros(np.repeat(lattice_size, lattice_dims))
 
-    # Make rectangle obstacle using four points
-    if rectangle:
-        x1,x2,y1,y2 = rectangle
-        obstacle_lattice[x1:x2+1, y1:y2+1] = 1
+    # Make rectangle obstacles using four points
+    if boxes is not None:
+        # Create slices from the box coordinates and assign 1s to the obstacle lattice at these slices
+        # slices = []
+        for i in range(0, boxes.shape[0]):
+            slices = tuple([slice(boxes[i, j], boxes[i, j+lattice_dims]+1) for j in range(lattice_dims)])
+            obstacle_lattice[slices] = 1
+        # x1,x2,y1,y2 = rectangle
+        # obstacle_lattice[x1:x2+1, y1:y2+1] = 1
 
     # Check if there is a seed in the obstacle
     if np.any(obstacle_lattice[tuple(seed_coords.T)] == 1):
@@ -62,8 +74,9 @@ def init_particles(lattice, prop_particles, obstacles=None):
     inputs:
         lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
         prop_particles (float) - a number between 0 and 1 determining the percentage / density of particles on the lattice
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise
     outputs:
-        init_particles (np.ndarray) - an array of particle coordinates
+        init_coords (np.ndarray) - an array of particle coordinates
     """
     assert 0 <= prop_particles <= 1, 'prop_articles must be a fraction of the particles'
 
@@ -89,13 +102,17 @@ def init_particles(lattice, prop_particles, obstacles=None):
     return init_coords
 
 
-def regen_particles(lattice, n_particles, obstacles=None):
+def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
     """
     Randomly regenerate a specific number of particles.
     inputs:
         lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
         n_particles (int) - the number of particles to regenerate
+        bndry_weights (np.ndarray) - an array of probabilities for regenerating particles at the boundaries in each dimension
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
     """
+
+    lattice_dims = np.ndim(lattice)
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
@@ -114,14 +131,42 @@ def regen_particles(lattice, n_particles, obstacles=None):
     #     # regenerate particles randomly wherever there are no seeds
     #     regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
     
-    regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
+    if bndry_weights is not None:
+        # Regenerate particles at the boundary
+        slices = []
+
+        # Create slices for selecting first and last row in each dimension
+        for i in range(lattice_dims):
+            start_slice = [slice(None)]*lattice_dims
+            start_slice[i] = 0
+            slices.append(tuple(start_slice))
+
+            end_slice = [slice(None)]*lattice_dims
+            end_slice[i] = -1
+            slices.append(tuple(end_slice))
+        
+        # Pick a slice randomly based on the weights
+        slice_selected = slices[np.random.choice(len(slices), p=bndry_weights.flatten())]
+
+        # Generate indices for each dimension
+        indices = [np.arange(size) for size in lattice.shape]
+
+        # Combine the indices into a grid
+        coords = np.stack(np.meshgrid(*indices, indexing='ij'), -1)
+
+        # Pick random particle coordinates from the selected slice
+        regen_coords = coords[slice_selected][np.random.choice(coords[slice_selected].shape[0], size=n_particles, replace=True)]
+
+    else:
+        # Regenerate particles randomly wherever there are no seeds
+        regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
 
     return regen_coords
 
 
 # ===== Particle movement functions =====
 
-def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=False, obstacles=None, drift_vec=None):
+def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=False, obstacles=None, drift_vec=None, regen_bndry=True):
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
@@ -130,7 +175,9 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         periodic (tuple of bool) - defines whether the lattice is periodic in each dimension, number of elements must correspond to dimensions
         moore (bool) - determine whether the particles move in a Moore neighbourhood
             or otherwise in a von Neumann neighbourhood; defaults to False
-        
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
+        drift_vec (np.ndarray) - a vector affecting the drift probabilities for each direction based on dot-product alignment; defaults to None
+        regen_bndry (bool) - determines whether particles regenerate at the boundary or otherwise anywhere in space; defaults to True
     outputs:
         the particle array after one step (numpy.ndarray)
     """
@@ -147,6 +194,10 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         moves = [m for m in moves if abs(sum(m)) == 1]
 
     moves = np.array(moves)
+    # print('moves: ', moves)
+
+    # Set boundary regeneration probabilities to None by default
+    bndry_weights = None
 
     # Create perturbation vectors
     if drift_vec is not None:
@@ -155,29 +206,34 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         weights = np.dot(moves, drift_vec) + 1.0
         weights[weights < 0] = 0
         weights /= weights.sum()
-        print('weights drift: ', weights)
+        # print('weights drift: ', weights)
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
+
+        # Create boundary regeneration probabilities based on drift probabilities
+        if regen_bndry:
+            dim_weights_start = [np.sum(weights[moves[:, dim] == 1]) for dim in range(lattice_dims)]
+            dim_weights_end = [np.sum(weights[moves[:, dim] == -1]) for dim in range(lattice_dims)]
+            bndry_weights = np.vstack((dim_weights_start, dim_weights_end)).T
 
     else:
         perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
 
+    # Move particles if on an unoccupied site
     mask = lattice[tuple(particles_in.T)] == 0
     particles_out = np.array(particles_in)
     particles_out[mask] += perturbations[mask]
+
+    # Generate particle reserves
+    if not np.all(np.array(periodic)):
+        particles_regen = regen_particles(lattice, particles_in.shape[0], bndry_weights=bndry_weights, obstacles=obstacles)
     
-    # Wrap around or regenerate (right, :,1, x) (left, :,0, y)
-    particles_out[:, 1] = np.mod(particles_out[:, 1], lattice_size)
-
-    # Regenerate at top when bottom or top boundary
-    particles_regen = regen_particles(lattice, particles_in.shape[0], obstacles=obstacles)
-
-    # Find particles that need to be regenerated
-    regen_indices = np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1)
-
-    # Randomly select new coordinates for these particles
-    new_coords = np.random.choice(len(particles_regen), size=np.sum(regen_indices))
-    particles_out[regen_indices] = np.array(particles_regen)[new_coords]
+    # Wrap around or regenerate
+    for i, p in enumerate(periodic):
+        if p:
+            particles_out[:, i] = np.mod(particles_out[:, i], lattice_size)
+        else:
+            particles_out[:, i] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1), particles_regen[:, i], particles_out[:, i])
 
     # For particles that have moved into an obstacle, revert them to their original positions.
     if type(obstacles) == np.ndarray:
@@ -202,6 +258,9 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
         prop_particles (float) - a number between 0 and 1 determining the percentage / density of particles on the lattice;
             if None, the particles will not be regenerated to compensate the proportion
         moore (bool) - determine whether the neighbourhood is Moore or otherwise von Neumann; defaults to False
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
+        sun_vec (np.ndarray) - a vector affecting the growth direction by prioritising neighbours aligned with its direction;
+            its magnitude affects how focused/diffuse the sunlight is: << 1 for diffuse, >> 1 for focused; defaults to [-1, 0]
     """
 
     # Create a copy of the lattice
