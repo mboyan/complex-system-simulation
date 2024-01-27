@@ -156,12 +156,35 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
 
         # Pick random particle coordinates from the selected slice
         regen_coords = coords[slice_selected][np.random.choice(coords[slice_selected].shape[0], size=n_particles, replace=True)]
+        print(n_particles)
+        print('regen_coords: ', regen_coords.shape)
 
     else:
         # Regenerate particles randomly wherever there are no seeds
         regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
 
     return regen_coords
+
+
+def regen_probabilities(nbr_coords, nbr_weights):
+    """
+    Create boundary regeneration probabilities based on neighbourhood weights
+    inputs:
+        nbr_coords (np.ndarray) - an array of neighbourhood coordinates
+        nbr_weights (np.ndarray) - an array of neighbourhood weights
+    outputs:
+        bndry_weights (np.ndarray) - an array of probabilities for regenerating particles at the boundaries in each dimension
+    """
+    assert nbr_coords.shape[0] == nbr_weights.shape[0], 'dimension mismatch between neighbourhood coordinates and weights'
+    
+    # Infer dimensions from number of coordinates
+    lattice_dims = nbr_coords.shape[1]
+    
+    dim_weights_start = [np.sum(nbr_weights[nbr_coords[:, dim] == 1]) for dim in range(lattice_dims)]
+    dim_weights_end = [np.sum(nbr_weights[nbr_coords[:, dim] == -1]) for dim in range(lattice_dims)]
+    bndry_weights = np.vstack((dim_weights_start, dim_weights_end)).T
+    
+    return bndry_weights
 
 
 # ===== Particle movement functions =====
@@ -212,9 +235,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
 
         # Create boundary regeneration probabilities based on drift probabilities
         if regen_bndry:
-            dim_weights_start = [np.sum(weights[moves[:, dim] == 1]) for dim in range(lattice_dims)]
-            dim_weights_end = [np.sum(weights[moves[:, dim] == -1]) for dim in range(lattice_dims)]
-            bndry_weights = np.vstack((dim_weights_start, dim_weights_end)).T
+            bndry_weights = regen_probabilities(moves, weights)
 
     else:
         perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
@@ -248,7 +269,8 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[1, 0]):
+
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[1, 0], drift_vec=None):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -261,6 +283,8 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
         obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
         sun_vec (np.ndarray) - a vector affecting the growth direction by prioritising neighbours aligned with its direction;
             its magnitude affects how focused/diffuse the sunlight is: << 1 for diffuse, >> 1 for focused; defaults to [1, 0]
+        drift_vec (np.ndarray) - a vector analogous to the drift vector in the move_particles_diffuse function;
+            if supplied, a particle regeneration at the boundary is assumed; defaults to None
     """
 
     # Create a copy of the lattice
@@ -286,7 +310,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
 
     # Calculate weights for each attachment direction based on dot product with sun vector
-    weights = np.dot(nbrs, -sun_vec) + 1.0
+    weights = np.dot(nbrs, -np.array(sun_vec)) + 1.0
     weights[weights < 0] = 0
     
     # Normalize weights
@@ -309,7 +333,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     # Compensate particle density
     if prop_particles is not None:
         # Recalculate lattice vacancy
-        lattice_vacancy = np.argwhere(lattice == 0)
+        lattice_vacancy = np.argwhere((lattice == 0) & (obstacles == 0))
         n_particles_potential = int(lattice_vacancy.shape[0] * prop_particles)
 
         # Regenerate as many particles as are needed to maintain the proportion
@@ -318,7 +342,14 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
         inactive_particle_indices = np.flatnonzero(~mask)
         n_particles_deficit = n_particles_potential - active_particle_indices.shape[0]
         if n_particles_deficit > 0:
-            particles_regen = regen_particles(lattice, n_particles_deficit, obstacles=obstacles)
+
+            if drift_vec is not None:
+                # Create boundary regeneration probabilities based on drift probabilities
+                bndry_weights = regen_probabilities(nbrs, weights)
+            else:
+                bndry_weights = None
+            
+            particles_regen = regen_particles(lattice, n_particles_deficit, bndry_weights=bndry_weights, obstacles=obstacles)
             particles[inactive_particle_indices[:n_particles_deficit]] = particles_regen
 
     return lattice, particles
