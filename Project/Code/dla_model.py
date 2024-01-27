@@ -248,7 +248,7 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[-1, 0]):
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[1, 0]):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -260,7 +260,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
         moore (bool) - determine whether the neighbourhood is Moore or otherwise von Neumann; defaults to False
         obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
         sun_vec (np.ndarray) - a vector affecting the growth direction by prioritising neighbours aligned with its direction;
-            its magnitude affects how focused/diffuse the sunlight is: << 1 for diffuse, >> 1 for focused; defaults to [-1, 0]
+            its magnitude affects how focused/diffuse the sunlight is: << 1 for diffuse, >> 1 for focused; defaults to [1, 0]
     """
 
     # Create a copy of the lattice
@@ -286,7 +286,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
 
     # Calculate weights for each attachment direction based on dot product with sun vector
-    weights = np.dot(nbrs, sun_vec) + 1.0
+    weights = np.dot(nbrs, -sun_vec) + 1.0
     weights[weights < 0] = 0
     
     # Normalize weights
