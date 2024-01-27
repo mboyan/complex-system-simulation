@@ -99,6 +99,7 @@ def regen_particles(lattice, n_particles, obstacles=None):
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
+
     # Only generates particles outside obstacles
     if type(obstacles) == np.ndarray:
         empty_locs = np.argwhere((lattice == 0) & (obstacles == 0))
@@ -150,13 +151,11 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     # Create perturbation vectors
     if drift_vec is not None:
 
-        # Calculate weights for each attachment direction based on dot product with normalized sun vector and a bias defined by the sun magnitude
-        # weights = np.abs(np.dot(moves, drift_vec / np.linalg.norm(drift_vec)) + 1.0 + np.linalg.norm(drift_vec))
-        # print(np.repeat(np.dot(moves, drift_vec), lattice_dims).reshape(moves.shape))
-        # weights = np.abs(moves.astype(float) + np.repeat(np.dot(moves, drift_vec), lattice_dims).reshape(moves.shape))
-        weights = np.linalg.norm(moves + drift_vec, axis=1)
+        # Calculate weights for each attachment direction based on dot product with drift vector
+        weights = np.dot(moves, drift_vec) + 1.0
+        weights[weights < 0] = 0
         weights /= weights.sum()
-        print('weights perturbation', weights)
+        print('weights drift: ', weights)
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
 
@@ -168,7 +167,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     particles_out[mask] += perturbations[mask]
     
     # Wrap around or regenerate (right, :,1, x) (left, :,0, y)
-    particles_out[:,1] = np.mod(particles_out[:, 1], lattice_size)
+    particles_out[:, 1] = np.mod(particles_out[:, 1], lattice_size)
 
     # Regenerate at top when bottom or top boundary
     particles_regen = regen_particles(lattice, particles_in.shape[0], obstacles=obstacles)
@@ -227,14 +226,13 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     # Shift padded lattice by neighbours, then remove the padding
     shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
 
-    # Calculate weights for each attachment direction based on dot product with normalized sun vector and a bias defined by the sun magnitude
-    # weights = np.abs(np.dot(nbrs, sun_vec / np.linalg.norm(sun_vec)) + 1.0 + np.linalg.norm(sun_vec))
-    # weights = np.abs(nbrs + np.repeat(np.dot(nbrs, sun_vec), lattice_dims).reshape(nbrs.shape))
-    weights = np.linalg.norm(nbrs + sun_vec, axis=1)
+    # Calculate weights for each attachment direction based on dot product with sun vector
+    weights = np.dot(nbrs, sun_vec) + 1.0
+    weights[weights < 0] = 0
     
     # Normalize weights
     weights /= np.sum(weights)
-    print('weights aggregation: ', weights)
+    # print('weights aggregation: ', weights)
 
     # Multiply shifted lattices by weights
     weights = np.repeat(weights, lattice_size ** lattice_dims)
