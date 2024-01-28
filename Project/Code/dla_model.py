@@ -26,24 +26,36 @@ def init_lattice(lattice_size, seed_coords):
 
     return lattice
 
-def init_obstacle_lattice(lattice_size, seed_coords, rectangle=False):
+def init_obstacle_lattice(lattice_size, boxes=None, seed_coords=None):
     """
     Create lattice where 0 determines free space and 1 determines an obstacle. 
     inputs:
-        rectangle (tuple): four points (x1,x2,y1,y2) that determine the two needed points for a rectangle
+        lattice_size (int) - the size of the lattice along one dimension
+        boxes (np.ndarray) - a 2D array containing the diagonal corner points of rectangular obstacles in a flattened form (e.g. x1, x2, y1, y2, ...). Defaults to None
+        seed_coords (np.ndarray) - the lattice coordinates of the initial seeds, used to check if seeds are in obstacles; defaults to None
     output:
         the obstacle lattice (np.ndarray) and the coordinates of the obstacle (np.ndarray)
     """
+
     # Infer dimensions from number of seed coordinates
     lattice_dims = seed_coords.shape[1]
     assert lattice_dims > 1
 
+    if boxes is not None:
+        assert np.ndim(boxes) == 2, 'box regions must be an np.ndarray with 2 dimensions'
+        assert boxes.shape[1] == lattice_dims * 2, 'each box region must be a tuple of 2*lattice_dims points (e.g. x1, x2, y1, y2, ...)'
+
     obstacle_lattice = np.zeros(np.repeat(lattice_size, lattice_dims))
 
-    # Make rectangle obstacle using four points
-    if rectangle:
-        x1,x2,y1,y2 = rectangle
-        obstacle_lattice[x1:x2+1, y1:y2+1] = 1
+    # Make rectangle obstacles using four points
+    if boxes is not None:
+        # Create slices from the box coordinates and assign 1s to the obstacle lattice at these slices
+        # slices = []
+        for i in range(0, boxes.shape[0]):
+            slices = tuple([slice(boxes[i, j], boxes[i, j+lattice_dims]+1) for j in range(lattice_dims)])
+            obstacle_lattice[slices] = 1
+        # x1,x2,y1,y2 = rectangle
+        # obstacle_lattice[x1:x2+1, y1:y2+1] = 1
 
     # Check if there is a seed in the obstacle
     if np.any(obstacle_lattice[tuple(seed_coords.T)] == 1):
@@ -53,71 +65,131 @@ def init_obstacle_lattice(lattice_size, seed_coords, rectangle=False):
     # obstacle_locs = np.argwhere(obstacle_lattice == 1)
 
     return obstacle_lattice
-    
 
 
-def init_particles(lattice, prop_particles, gravity = False, obstacle = False):
+def init_particles(lattice, prop_particles, obstacles=None):
     """
     Creates an array of n-dimensional particles where the number of particles
     is determined by a proportion from an input lattice size.
     inputs:
         lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
         prop_particles (float) - a number between 0 and 1 determining the percentage / density of particles on the lattice
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise
     outputs:
-        init_particles (np.ndarray) - an array of particle coordinates
+        init_coords (np.ndarray) - an array of particle coordinates
     """
     assert 0 <= prop_particles <= 1, 'prop_articles must be a fraction of the particles'
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
-    if type(obstacle) == np.ndarray:
-        empty_locs = np.argwhere((lattice == 0) & (obstacle == 0))
+    if type(obstacles) == np.ndarray:
+        empty_locs = np.argwhere((lattice == 0) & (obstacles == 0))
 
     # Determine number of particles=
     n_particles = int(empty_locs.shape[0] * prop_particles)
 
-    if gravity:
-        # Initialize particles in the top of the grid
-        top = 2 * prop_particles
-        init_coords = empty_locs[np.random.choice(int(top * empty_locs.shape[0]), size=n_particles, replace=False)]
+    # if gravity:
+    #     # Initialize particles in the top of the grid
+    #     top = 2 * prop_particles
+    #     init_coords = empty_locs[np.random.choice(int(top * empty_locs.shape[0]), size=n_particles, replace=False)]
 
-    else:
-        # Initialize particles randomly wherever there are no seeds
-        init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
+    # else:
+    #     # Initialize particles randomly wherever there are no seeds
+    #     init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
+    
+    init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
 
     return init_coords
 
 
-def regen_particles(lattice, n_particles, gravity = False, obstacle=False):
+def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
     """
     Randomly regenerate a specific number of particles.
     inputs:
         lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
         n_particles (int) - the number of particles to regenerate
+        bndry_weights (np.ndarray) - an array of probabilities for regenerating particles at the boundaries in each dimension
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
     """
+
+    lattice_dims = np.ndim(lattice)
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
-    # Only generates particles outside obstacle
-    if type(obstacle) == np.ndarray:
-        empty_locs = np.argwhere((lattice == 0) & (obstacle == 0))
+
+    # Only generates particles outside obstacles
+    if type(obstacles) == np.ndarray:
+        empty_locs = np.argwhere((lattice == 0) & (obstacles == 0))
 
     assert n_particles <= empty_locs.shape[0], 'too many particles to regenerate'
 
-    if gravity:
-        # regenerate particles in the top of the grid
-        regen_coords = empty_locs[np.random.choice(int(0.2 * empty_locs.shape[0]), size=n_particles, replace=False)]
+    # if gravity:
+    #     # regenerate particles in the top of the grid
+    #     regen_coords = empty_locs[np.random.choice(int(0.2 * empty_locs.shape[0]), size=n_particles, replace=False)]
+
+    # else:
+    #     # regenerate particles randomly wherever there are no seeds
+    #     regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
+    
+    if bndry_weights is not None:
+        # Regenerate particles at the boundary
+        slices = []
+
+        # Create slices for selecting first and last row in each dimension
+        for i in range(lattice_dims):
+            start_slice = [slice(None)]*lattice_dims
+            start_slice[i] = 0
+            slices.append(tuple(start_slice))
+
+            end_slice = [slice(None)]*lattice_dims
+            end_slice[i] = -1
+            slices.append(tuple(end_slice))
+        
+        # Pick a slice randomly based on the weights
+        slice_selected = slices[np.random.choice(len(slices), p=bndry_weights.flatten())]
+
+        # Generate indices for each dimension
+        indices = [np.arange(size) for size in lattice.shape]
+
+        # Combine the indices into a grid
+        coords = np.stack(np.meshgrid(*indices, indexing='ij'), -1)
+
+        # Pick random particle coordinates from the selected slice
+        regen_coords = coords[slice_selected][np.random.choice(coords[slice_selected].shape[0], size=n_particles, replace=True)]
+        print(n_particles)
+        print('regen_coords: ', regen_coords.shape)
 
     else:
-        # regenerate particles randomly wherever there are no seeds
+        # Regenerate particles randomly wherever there are no seeds
         regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
 
     return regen_coords
 
 
+def regen_probabilities(nbr_coords, nbr_weights):
+    """
+    Create boundary regeneration probabilities based on neighbourhood weights
+    inputs:
+        nbr_coords (np.ndarray) - an array of neighbourhood coordinates
+        nbr_weights (np.ndarray) - an array of neighbourhood weights
+    outputs:
+        bndry_weights (np.ndarray) - an array of probabilities for regenerating particles at the boundaries in each dimension
+    """
+    assert nbr_coords.shape[0] == nbr_weights.shape[0], 'dimension mismatch between neighbourhood coordinates and weights'
+    
+    # Infer dimensions from number of coordinates
+    lattice_dims = nbr_coords.shape[1]
+    
+    dim_weights_start = [np.sum(nbr_weights[nbr_coords[:, dim] == 1]) for dim in range(lattice_dims)]
+    dim_weights_end = [np.sum(nbr_weights[nbr_coords[:, dim] == -1]) for dim in range(lattice_dims)]
+    bndry_weights = np.vstack((dim_weights_start, dim_weights_end)).T
+    
+    return bndry_weights
+
+
 # ===== Particle movement functions =====
 
-def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, obstacle=False, flow = None):
+def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=False, obstacles=None, drift_vec=None, regen_bndry=True):
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
@@ -126,10 +198,13 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, 
         periodic (tuple of bool) - defines whether the lattice is periodic in each dimension, number of elements must correspond to dimensions
         moore (bool) - determine whether the particles move in a Moore neighbourhood
             or otherwise in a von Neumann neighbourhood; defaults to False
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
+        drift_vec (np.ndarray) - a vector affecting the drift probabilities for each direction based on dot-product alignment; defaults to None
+        regen_bndry (bool) - determines whether particles regenerate at the boundary or otherwise anywhere in space; defaults to True
     outputs:
         the particle array after one step (numpy.ndarray)
     """
-    # assert len(periodic) == particles_in.shape[1], 'dimension mismatch with periodicity tuple'
+    assert len(periodic) == particles_in.shape[1], 'dimension mismatch with periodicity tuple'
 
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
@@ -142,40 +217,49 @@ def move_particles_diffuse(particles_in, lattice, moore=False, gravity = False, 
         moves = [m for m in moves if abs(sum(m)) == 1]
 
     moves = np.array(moves)
+    # print('moves: ', moves)
 
-    # Perturb particles (only if they are not on an occupied site)
+    # Set boundary regeneration probabilities to None by default
+    bndry_weights = None
 
-    if flow is not None:
-        assert -1 <= flow[0] <= 1 and -1 <= flow[1] <= 1, 'flow should be between -1 and 1'
-        weights = np.linalg.norm(moves + flow, axis=1)
+    # Create perturbation vectors
+    if drift_vec is not None:
+
+        # Calculate weights for each attachment direction based on dot product with drift vector
+        weights = np.dot(moves, drift_vec) + 1.0
+        weights[weights < 0] = 0
         weights /= weights.sum()
+        # print('weights drift: ', weights)
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
+
+        # Create boundary regeneration probabilities based on drift probabilities
+        if regen_bndry:
+            bndry_weights = regen_probabilities(moves, weights)
 
     else:
         perturbations = moves[np.random.randint(len(moves), size=particles_in.shape[0])]
 
+    # Move particles if on an unoccupied site
     mask = lattice[tuple(particles_in.T)] == 0
     particles_out = np.array(particles_in)
     particles_out[mask] += perturbations[mask]
+
+    # Generate particle reserves
+    if not np.all(np.array(periodic)):
+        particles_regen = regen_particles(lattice, particles_in.shape[0], bndry_weights=bndry_weights, obstacles=obstacles)
     
-    # Wrap around or regenerate (right, :,1, x) (left, :,0, y)
-    particles_out[:,1] = np.mod(particles_out[:, 1], lattice_size)
-
-    # Regenerate at top when bottom or top boundary
-    particles_regen = regen_particles(lattice, particles_in.shape[0], gravity = gravity, obstacle=obstacle)
-
-    # Find particles that need to be regenerated
-    regen_indices = np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1)
-
-    # Randomly select new coordinates for these particles
-    new_coords = np.random.choice(len(particles_regen), size=np.sum(regen_indices))
-    particles_out[regen_indices] = np.array(particles_regen)[new_coords]
+    # Wrap around or regenerate
+    for i, p in enumerate(periodic):
+        if p:
+            particles_out[:, i] = np.mod(particles_out[:, i], lattice_size)
+        else:
+            particles_out[:, i] = np.where(np.any((particles_out < 0) | (particles_out >= lattice_size), axis=1), particles_regen[:, i], particles_out[:, i])
 
     # For particles that have moved into an obstacle, revert them to their original positions.
-    if type(obstacle) == np.ndarray:
-        in_obstacle = obstacle[tuple(particles_out[mask].T)]
-        particles_out[mask] = np.where(np.repeat(in_obstacle, 2).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
+    if type(obstacles) == np.ndarray:
+        in_obstacles = obstacles[tuple(particles_out[mask].T)]
+        particles_out[mask] = np.where(np.repeat(in_obstacles, 2).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
     
     return particles_out
 
@@ -185,7 +269,8 @@ def move_particles_laminar():
 
 
 # ===== Aggregation function =====
-def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True, True), moore=False, gravity = False, obstacle=False, sun = 1):
+
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[1, 0], drift_vec=None):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -194,8 +279,12 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
         lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
         prop_particles (float) - a number between 0 and 1 determining the percentage / density of particles on the lattice;
             if None, the particles will not be regenerated to compensate the proportion
-        periodic (tuple of bool) - defines whether the lattice is periodic in each dimension, number of elements must correspond to dimensions
         moore (bool) - determine whether the neighbourhood is Moore or otherwise von Neumann; defaults to False
+        obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
+        sun_vec (np.ndarray) - a vector affecting the growth direction by prioritising neighbours aligned with its direction;
+            its magnitude affects how focused/diffuse the sunlight is: << 1 for diffuse, >> 1 for focused; defaults to [1, 0]
+        drift_vec (np.ndarray) - a vector analogous to the drift vector in the move_particles_diffuse function;
+            if supplied, a particle regeneration at the boundary is assumed; defaults to None
     """
 
     # Create a copy of the lattice
@@ -204,8 +293,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
     assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'
-    assert len(periodic) == lattice_dims, 'dimension mismatch between periodicity labels and lattice'
-    assert len(periodic) == particles.shape[1], 'dimension mismatch between periodicity labels and particles'
+    assert len(sun_vec) == lattice_dims, 'dimension mismatch between sun vector and lattice'
 
     # Define particle neighbourhoods (Moore)
     nbrs = [neighbor for neighbor in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(neighbor) != 0]
@@ -213,27 +301,28 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
     # Reduce to von Neumann neighbourhood
     if not moore:
         nbrs = [n for n in nbrs if abs(sum(n)) == 1]
-
-    # Shift lattice by neighbourhoods
     nbrs = np.array(nbrs)
-    shifted_lattices = np.array([np.roll(lattice, shift, tuple(range(lattice_dims))) for shift in nbrs])
 
-    # make sure there is no attachment in the upper row
-    shifted_lattices[-2,0,:] *= 0
+    # Pad lattice with zeros (avoid periodic attachment)
+    padded_lattice = np.pad(lattice, ((1, 1),)*lattice_dims, mode='constant')
 
-    sun_vec = [sun, 0]
-    assert 0 <= sun <= 1, 'sun is a proportion parameter'
-    weights = np.linalg.norm(nbrs - sun_vec, axis = 1)
+    # Shift padded lattice by neighbours, then remove the padding
+    shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
+
+    # Calculate weights for each attachment direction based on dot product with sun vector
+    weights = np.dot(nbrs, -np.array(sun_vec)) + 1.0
+    weights[weights < 0] = 0
+    
+    # Normalize weights
+    weights /= np.sum(weights)
+    # print('weights aggregation: ', weights)
+
+    # Multiply shifted lattices by weights
     weights = np.repeat(weights, lattice_size ** lattice_dims)
     weights = np.reshape(weights, shifted_lattices.shape)
     shifted_lattices *= weights
-
     summed_nbrs_lattice = np.sum(shifted_lattices, axis=0)
 
-    # Zero edge rows of shifted lattices if not periodic
-    if not np.all(np.array(periodic)):
-        pass
-    
     # Check if particles are neighbouring seeds
     u = np.random.uniform()
     new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > np.max(weights) * u)
@@ -244,7 +333,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
     # Compensate particle density
     if prop_particles is not None:
         # Recalculate lattice vacancy
-        lattice_vacancy = np.argwhere(lattice == 0)
+        lattice_vacancy = np.argwhere((lattice == 0) & (obstacles == 0))
         n_particles_potential = int(lattice_vacancy.shape[0] * prop_particles)
 
         # Regenerate as many particles as are needed to maintain the proportion
@@ -253,7 +342,14 @@ def aggregate_particles(particles, lattice, prop_particles=None, periodic=(True,
         inactive_particle_indices = np.flatnonzero(~mask)
         n_particles_deficit = n_particles_potential - active_particle_indices.shape[0]
         if n_particles_deficit > 0:
-            particles_regen = regen_particles(lattice, n_particles_deficit, gravity = gravity, obstacle=obstacle)
+
+            if drift_vec is not None:
+                # Create boundary regeneration probabilities based on drift probabilities
+                bndry_weights = regen_probabilities(nbrs, weights)
+            else:
+                bndry_weights = None
+            
+            particles_regen = regen_particles(lattice, n_particles_deficit, bndry_weights=bndry_weights, obstacles=obstacles)
             particles[inactive_particle_indices[:n_particles_deficit]] = particles_regen
 
     return lattice, particles
