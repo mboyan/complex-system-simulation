@@ -8,7 +8,7 @@ from itertools import product
 import dla_model as dm
 import cs_measures as cm
 
-def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=None, **sim_params):
+def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=None, obstacle_boxes=None, drift_vec=[1,0], sun_vec=[1,0], **sim_params):
     """
     Run a single DLA simulation.
     inputs:
@@ -17,9 +17,12 @@ def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=No
         max_timesteps (int) - the maximum number of time steps for the simulation
         seeds (np.ndarray) - an array of lattice site coordinates for the placement of initial seeds
         particle_density (float) - a number between 0 and 1 determining the percentage / density of particles on the lattice
-        target_mass (int) - if specified, the number of DLA cells to reach before stopping the simulation. Defaults to None
-        track_radius (bool) - if True, track the maximum radius of the DLA structure from a single initial seed over time. Defaults to False
-        sim_params (dict) - a dictionary of simulation parameters
+        target_mass (int) - if specified, the number of DLA cells to reach before stopping the simulation; defaults to None
+        track_radius (bool) - if True, track the maximum radius of the DLA structure from a single initial seed over time; defaults to False
+        obstacle_boxes (np.ndarray) - an array of obstacle box coordinates (diagonal corners in flattened form, e.g. x1, x2, y1, y2, ...); defaults to None
+        drift_vec (np.ndarray) - a vector determining the drift direction of particles (movement direction bias); defaults to [1,0]
+        sun_vec (np.ndarray) - a vector determining the direction of the sun (growth direction bias); defaults to [1,0]
+        sim_params (dict) - a dictionary of simulation parameters which are constant among all simulations
     outputs:
         lattice_frames (np.ndarray) - a series of lattice states
         particles_frames (np.ndarray) - a series of particle coordinates
@@ -27,18 +30,24 @@ def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=No
     """
     
 
-    # Unpack simulation parameters
+    # Unpack fixed simulation parameters
     periodic = sim_params.get('periodic', (False, True))
     move_moore = sim_params.get('move_moore', False)
     aggr_moore = sim_params.get('aggr_moore', False)
-    regen_toggle = sim_params.get('regen_toggle', False)
+    regen_mode = sim_params.get('regen_mode', False)
     track_radius = sim_params.get('track_radius', False)
 
     assert (track_radius == True and seeds.shape[0] == 1) or track_radius == False, 'radius tracking only works for single seed simulations'
+    assert (regen_mode in [None, 'edge', 'anywhere']), 'regen_mode must be None, "edge" or "anywhere"'
     
     # Enable regeneration of particles
-    if regen_toggle:
+    regen_bndry = False
+    if regen_mode is not None:
+
         regen_density = particle_density
+        
+        if regen_mode == 'edge':
+            regen_bndry = True
     else:
         regen_density = None
 
@@ -48,9 +57,16 @@ def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=No
     # Initialize lattice
     lattice_start = dm.init_lattice(lattice_size, seeds)
 
+    # Initialize obstacle lattice
+    if obstacle_boxes is not None:
+        boxes = np.array([[15,17,19,35], [40, 45, 50, 55]])
+        obstacles = dm.init_obstacle_lattice(lattice_size, boxes=obstacle_boxes, seed_coords=seeds)
+    else:
+        obstacles = None
+
     # Initialize particles
     particle_density = 0.1
-    particles_start = dm.init_particles(lattice_start, particle_density)
+    particles_start = dm.init_particles(lattice_start, particle_density, obstacles)
 
     # Arrays for storing data frames
     lattice_frames = np.empty([max_timesteps] + [lattice_size for _ in range(lattice_dims)])
@@ -70,10 +86,12 @@ def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=No
         particles_frames[step] = dm.particles_to_lattice(current_particles, lattice_size)
 
         # Move particles
-        current_particles = dm.move_particles_diffuse(current_particles, current_lattice, periodic=periodic, moore=move_moore)
+        current_particles = dm.move_particles_diffuse(current_particles, current_lattice, periodic=periodic, moore=move_moore, obstacles=obstacles,
+                                                      drift_vec=drift_vec, regen_bndry=regen_bndry)
 
         # Aggregate particles
-        new_lattice, current_particles = dm.aggregate_particles(current_particles, current_lattice, regen_density, periodic=periodic, moore=aggr_moore)
+        new_lattice, current_particles = dm.aggregate_particles(current_particles, current_lattice, regen_density, moore=aggr_moore,
+                                                                obstacles=obstacles, sun_vec=sun_vec)
         
         # Calculate maximum radius of DLA structure
         if track_radius and step > 0:
@@ -104,7 +122,9 @@ def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=No
     return lattice_frames, particles_frames, dla_radii
 
 
-def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series, seeds_series, particle_density_series, target_mass_series, radius_scale_mode=False, n_saved_sims=1, **sim_params):
+def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series, seeds_series, particle_density_series, target_mass_series,
+                              obstacle_box_series, drift_vec_series, sun_vec_series,
+                              radius_scale_mode=False, n_saved_sims=1, **sim_params):
     """
     Runs a series of simulations to estimate the mean fractal dimension of DLA structures.
     inputs:
@@ -128,6 +148,9 @@ def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series,
     assert seeds_series.ndim == 3, 'seeds_series must be a 3D array'
     assert particle_density_series.ndim == 1, 'particle_density_series must be a 1D array'
     assert target_mass_series.ndim == 1, 'target_mass_series must be a 1D array'
+    assert obstacle_box_series.ndim == 1 or obstacle_box_series.ndim == 3, 'obstacle_box_series must be a 1D or 3D array'
+    assert drift_vec_series.ndim == 2, 'drift_vec_series must be a 2D array'
+    assert sun_vec_series.ndim == 2, 'sun_vec_series must be a 2D array'
     assert np.all(np.log2(lattice_size_series) % 1 == 0), 'lattice_size_series must be a series of powers of 2'
     assert n_saved_sims <= n_sims, 'n_saved_sims must be less than or equal to n_sims'
 
@@ -135,14 +158,15 @@ def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series,
     sim_results = []
     dla_evolutions = {'lattice_frames': [], 'particles_frames': []}
     
-    param_combos = product(lattice_size_series, max_timesteps_series, seeds_series, particle_density_series, target_mass_series)
+    param_combos = product(lattice_size_series, max_timesteps_series, seeds_series, particle_density_series, target_mass_series,
+                           obstacle_box_series, drift_vec_series, sun_vec_series)
 
     # Iterate over parameter combinations
     for i, combo in enumerate(param_combos):
 
         # Unpack and print simulation parameters
         param_names = ['lattice_size', 'max_timesteps', 'seeds', 'particle_density', 'target_mass']
-        lattice_size, max_timesteps, seeds, particle_density, target_mass = combo
+        lattice_size, max_timesteps, seeds, particle_density, target_mass, obstacle_boxes, drift_vec, sun_vec = combo
         param_string = "; ".join([f"{k}: {v}" for k, v in zip(param_names, combo)])
         print(f'Running parameters: {param_string}')
 
@@ -156,7 +180,8 @@ def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series,
             print(f'Running simulation {j + 1} of {n_sims}')
 
             # Run DLA simulation
-            lattice_frames, particles_frames, dla_radii = run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass, **sim_params)
+            lattice_frames, particles_frames, dla_radii = run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass,
+                                                                  obstacle_boxes, drift_vec, sun_vec, **sim_params)
 
             # Save simulation steps
             evol_ref = None
@@ -175,7 +200,8 @@ def analyse_fractal_dimension(n_sims, lattice_size_series, max_timesteps_series,
 
             # Save simulation results
             new_data = {'lattice_size': lattice_size, 'max_timesteps': max_timesteps, 'seeds': list(seeds), 'particle_density': particle_density, 'target_mass': target_mass,
-                             'dim_box_series': dim_box_series, 'scale_series': scale_series, 'n_box_series': n_box_series, 'coeffs': coeffs, 'evol_ref': evol_ref}
+                        'dim_box_series': dim_box_series, 'scale_series': scale_series, 'n_box_series': n_box_series,
+                        'coeffs': coeffs, 'evol_ref': evol_ref}
             sim_results.append(new_data)
     
     return sim_results, dla_evolutions

@@ -50,12 +50,9 @@ def init_obstacle_lattice(lattice_size, boxes=None, seed_coords=None):
     # Make rectangle obstacles using four points
     if boxes is not None:
         # Create slices from the box coordinates and assign 1s to the obstacle lattice at these slices
-        # slices = []
         for i in range(0, boxes.shape[0]):
             slices = tuple([slice(boxes[i, j], boxes[i, j+lattice_dims]+1) for j in range(lattice_dims)])
             obstacle_lattice[slices] = 1
-        # x1,x2,y1,y2 = rectangle
-        # obstacle_lattice[x1:x2+1, y1:y2+1] = 1
 
     # Check if there is a seed in the obstacle
     if np.any(obstacle_lattice[tuple(seed_coords.T)] == 1):
@@ -113,6 +110,7 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
     """
 
     lattice_dims = np.ndim(lattice)
+    assert lattice_dims > 1
 
     # Find empty locations in the lattice
     empty_locs = np.argwhere(lattice == 0)
@@ -204,19 +202,24 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     outputs:
         the particle array after one step (numpy.ndarray)
     """
-    assert len(periodic) == particles_in.shape[1], 'dimension mismatch with periodicity tuple'
+    assert len(periodic) == particles_in.shape[1], 'dimension mismatch between particles periodicity tuple'
 
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
 
+    assert lattice_dims > 1
+    assert lattice_dims == particles_in.shape[1], 'dimension mismatch between lattice and particles'
+    assert lattice_dims == len(periodic), 'dimension mismatch between lattice and periodicity tuple'
+    if obstacles is not None:
+        assert lattice_dims == np.ndim(obstacles), 'dimension mismatch between lattice and obstacles'
+
     # Define Moore neighbourhood
     moves = [step for step in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(step) != 0]
-    
+    moves = np.array(moves)
+
     # Reduce to von Neumann neighbourhood
     if not moore:
-        moves = [m for m in moves if abs(sum(m)) == 1]
-
-    moves = np.array(moves)
+        moves = moves[np.sum(np.abs(moves), axis=1) == 1]
     # print('moves: ', moves)
 
     # Set boundary regeneration probabilities to None by default
@@ -224,6 +227,8 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
 
     # Create perturbation vectors
     if drift_vec is not None:
+
+        assert len(drift_vec) == lattice_dims, 'dimension mismatch between drift vector and lattice'
 
         # Calculate weights for each attachment direction based on dot product with drift vector
         weights = np.dot(moves, drift_vec) + 1.0
@@ -259,7 +264,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     # For particles that have moved into an obstacle, revert them to their original positions.
     if type(obstacles) == np.ndarray:
         in_obstacles = obstacles[tuple(particles_out[mask].T)]
-        particles_out[mask] = np.where(np.repeat(in_obstacles, 2).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
+        particles_out[mask] = np.where(np.repeat(in_obstacles, lattice_dims).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
     
     return particles_out
 
@@ -270,7 +275,7 @@ def move_particles_laminar():
 
 # ===== Aggregation function =====
 
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[1, 0], drift_vec=None):
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=None, drift_vec=None):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -292,16 +297,21 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
 
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
+    assert lattice_dims > 1
     assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'
-    assert len(sun_vec) == lattice_dims, 'dimension mismatch between sun vector and lattice'
+    if sun_vec is not None:
+        assert len(sun_vec) == lattice_dims, 'dimension mismatch between sun vector and lattice'
+    if obstacles is not None:
+        assert lattice_dims == np.ndim(obstacles), 'dimension mismatch between lattice and obstacles'
 
     # Define particle neighbourhoods (Moore)
     nbrs = [neighbor for neighbor in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(neighbor) != 0]
+    nbrs = np.array(nbrs)
 
     # Reduce to von Neumann neighbourhood
     if not moore:
-        nbrs = [n for n in nbrs if abs(sum(n)) == 1]
-    nbrs = np.array(nbrs)
+        nbrs = nbrs[np.sum(np.abs(nbrs), axis=1) == 1]
+    # print('nbrs: ', nbrs)
 
     # Pad lattice with zeros (avoid periodic attachment)
     padded_lattice = np.pad(lattice, ((1, 1),)*lattice_dims, mode='constant')
@@ -310,8 +320,11 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
 
     # Calculate weights for each attachment direction based on dot product with sun vector
-    weights = np.dot(nbrs, -np.array(sun_vec)) + 1.0
-    weights[weights < 0] = 0
+    if sun_vec is not None:
+        weights = np.dot(nbrs, -np.array(sun_vec)) + 1.0
+        weights[weights < 0] = 0
+    else:
+        weights = np.ones(nbrs.shape[0])
     
     # Normalize weights
     weights /= np.sum(weights)
@@ -333,7 +346,10 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     # Compensate particle density
     if prop_particles is not None:
         # Recalculate lattice vacancy
-        lattice_vacancy = np.argwhere((lattice == 0) & (obstacles == 0))
+        if obstacles is None:
+            lattice_vacancy = np.argwhere(lattice == 0)
+        else:
+            lattice_vacancy = np.argwhere((lattice == 0) & (obstacles == 0))
         n_particles_potential = int(lattice_vacancy.shape[0] * prop_particles)
 
         # Regenerate as many particles as are needed to maintain the proportion

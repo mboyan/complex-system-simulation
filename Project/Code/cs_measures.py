@@ -4,6 +4,8 @@ This module contains functions for calculating various complex systems measures.
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+import networkx as nx
 from itertools import product
 
 def fractal_dimension_clusters(lattice_array):
@@ -13,7 +15,7 @@ def fractal_dimension_clusters(lattice_array):
     containing non-negative cells. Performs a linear regression on the log-log plot of
     number of clusters vs cluster size to determine the fractal dimension.
     inputs:
-        img_array (np.ndarray) - represents a lattice with equal measure in each dimension (should be a power of 2)
+        lattice_array (np.ndarray) - represents a lattice with equal measure in each dimension (should be a power of 2)
     outputs:
         dim_box_series (np.ndarray) - a series of box dimensions
         n_box_series (np.ndarray) - a series of occupied box counts
@@ -89,3 +91,60 @@ def fractal_dimension_radius(radius_series, n_box_series):
     coeffs = np.polyfit(log_radius_series, log_n_box_series, 1)
 
     return dim_box_series, coeffs
+
+
+def branch_distribution(lattice_array, seed_coords, moore=False):
+    """
+    Computes the branch distribution of a DLA structure by tracing the shortest paths
+    from the branch tips to the seed point, identifying the membership of a lattice site
+    to a specific branch by the number of paths that pass through it and counting the number
+    of branches of different lengths.
+    inputs:
+        lattice_array (np.ndarray) - a lattice grid where non-zero values represent occupied lattice sites
+        seed_coords (tuple) - the coordinates of the seed point
+        moore (bool) - whether to use the Moore neighborhood (8-connected) or the Von Neumann neighborhood (4-connected); default is Von Neumann
+    """
+    assert lattice_array[tuple(seed_coords)] == 1, 'seed point must be occupied'
+
+    lattice_dims = np.ndim(lattice_array)
+
+    # Create an empty graph
+    G = nx.Graph()
+
+    # Create a network over the non-zero lattice sites
+    for index in np.ndindex(lattice_array.shape):
+
+        # Add a node for the current cell
+        G.add_node(index)
+
+        # If the current cell is occupied
+        if lattice_array[index] > 0:
+
+            # Define Moore neighbourhood
+            offsets = [step for step in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(step) != 0]
+            offsets = np.array(offsets)
+
+            # Reduce to von Neumann neighbourhood
+            if not moore:
+                offsets = offsets[np.sum(np.abs(offsets), axis=1) == 1]
+
+            # Connect the current cell to its neighbours
+            for offset in offsets:
+                # Skip the current cell
+                if all(o == 0 for o in offset):
+                    continue
+                # Compute the neighbor's coordinates
+                neighbour = tuple(i + o for i, o in zip(index, offset))
+                # If the neighbor is within the lattice and its value is 1
+                if all(0 <= i < s for i, s in zip(neighbour, lattice_array.shape)) and lattice_array[neighbour] == 1:
+                    # Add an edge from the current cell to the neighbor
+                    G.add_edge(index, neighbour)
+
+    # Create a figure and axes
+    fig, ax = plt.subplots()
+
+    # Draw the graph
+    pos = {node: node for node in G.nodes}
+    nx.draw(G, pos, ax=ax, node_size=10, node_color='red')
+
+    return
