@@ -8,6 +8,26 @@ from itertools import product
 
 # ===== Particle / lattice initialization =====
 
+def init_seeds_bottom(lattice_size, n_seeds):
+    """
+    Creates equally spaced seeds at the bottom of the lattice.
+    inputs:
+        lattice_size - size of the side of the lattice square 
+        n_seeds - the amount of seeds
+    outputs:
+        seed_coords (np.array) - an array of lattice site coordinates for the placement of initial seeds
+    """
+    assert 1 <= n_seeds <= lattice_size
+
+    bottom = lattice_size - 1
+
+    x_coords = np.delete(np.arange(0, n_seeds + 1),0) * int(lattice_size/(n_seeds + 1))
+    y_coords = np.repeat(bottom, n_seeds)
+
+    seed_coords = np.column_stack((y_coords, x_coords))
+
+    return seed_coords
+
 def init_lattice(lattice_size, seed_coords):
     """
     Creates a square lattice with initial seeds placed on specific sites.
@@ -273,7 +293,7 @@ def move_particles_laminar():
 
 # ===== Aggregation function =====
 
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[1, 0], drift_vec=None, multi_seed = False):
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=[1, 0], drift_vec=None, multi_seed = (False,False)):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -312,26 +332,22 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     # Shift padded lattice by neighbours, then remove the padding
     shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
     
-    if multi_seed:
+    if multi_seed[0]:
         # reshape to get arrays of all possible neighbors for each point
-        reshaped_sl = shifted_lattices.reshape(shifted_lattices.shape[0], -1)
-        reshaped_sl = reshaped_sl.astype(int)
-
-        for row in reshaped_sl.T:
-            print(row)
-            print(row[np.nonzero(row)])
-            if len(row[np.nonzero(row)]) != 0:
-                print('ie')
-
+        reshaped_sl = shifted_lattices.reshape(shifted_lattices.shape[0], -1).astype(int)
+    
         # count most occurring neighbor
         nbr_counts = np.apply_along_axis(lambda x: np.bincount(x, minlength = int(shifted_lattices.max()+ 1)), axis = 0, arr = reshaped_sl)
-        # remove the neighbors that are zero
-        # print('nbr counts 1', nbr_counts)
-        np.delete(nbr_counts, 0)
-        # print('nbr counts 2', nbr_counts)
-        most_occurring_nbrs = nbr_counts.argmax(axis = 0).reshape((lattice_size, lattice_size)) + 1 # add 1 to use the index
-        # print('nbrs', most_occurring_nbrs)
-    
+
+        # set count for zero to 0.5 (highest if it only zeros (no neighbors), lower when there is at least one neighbor)
+        nbr_counts[0] = 0.5
+
+        if multi_seed [1]:
+            pass
+        else:
+            # find most occurring neighbor
+            most_occurring_nbrs = nbr_counts.argmax(axis = 0).reshape((lattice_size, lattice_size)) # picks the lowest value when equal amount of neighbors
+
     # Calculate weights for each attachment direction based on dot product with sun vector
     weights = np.dot(nbrs, -np.array(sun_vec)) + 1.0
     weights[weights < 0] = 0
@@ -378,7 +394,6 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
             particles_regen = regen_particles(lattice, n_particles_deficit, bndry_weights=bndry_weights, obstacles=obstacles)
             particles[inactive_particle_indices[:n_particles_deficit]] = particles_regen
 
-    print('lattice', lattice[-4:])
     return lattice, particles
 
 
