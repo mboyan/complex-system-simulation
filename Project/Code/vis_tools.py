@@ -124,8 +124,8 @@ def plot_fractal_dimension(scale_series, n_box_series, coeffs, ax=None, label=No
     n_boxes_fit = np.exp(log_n_boxes_fit)
     ax.loglog(scale_series, n_boxes_fit, linestyle='--', color='red', label=f'regression ($D={coeffs[0]}$)')
 
-    ax.set_xlabel("$1/\epsilon$")
-    ax.set_ylabel("$N(\epsilon)$")
+    ax.set_xlabel("$1/\\epsilon$")
+    ax.set_ylabel("$N(\\epsilon)$")
     ax.legend()
     fig.suptitle("Lattice scaling factor vs number of occupied lattice sites")
 
