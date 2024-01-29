@@ -110,6 +110,7 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
     """
 
     lattice_dims = np.ndim(lattice)
+    assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
     assert lattice_dims > 1
 
     # Find empty locations in the lattice
@@ -210,6 +211,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     assert lattice_dims > 1
     assert lattice_dims == particles_in.shape[1], 'dimension mismatch between lattice and particles'
     assert lattice_dims == len(periodic), 'dimension mismatch between lattice and periodicity tuple'
+    assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
     if obstacles is not None:
         assert lattice_dims == np.ndim(obstacles), 'dimension mismatch between lattice and obstacles'
 
@@ -299,6 +301,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     lattice_size = lattice.shape[0]
     assert lattice_dims > 1
     assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'
+    assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
     if sun_vec is not None:
         assert len(sun_vec) == lattice_dims, 'dimension mismatch between sun vector and lattice'
     if obstacles is not None:

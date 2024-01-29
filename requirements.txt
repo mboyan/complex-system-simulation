@@ -1,1 +1,2 @@
 ffmpeg-6.0
+powerlaw-1.5

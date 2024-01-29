@@ -4,8 +4,8 @@ This module contains functions for calculating various complex systems measures.
 
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 import networkx as nx
+import powerlaw as pl
 from itertools import product
 
 def fractal_dimension_clusters(lattice_array):
@@ -104,7 +104,10 @@ def branch_distribution(lattice_array, seed_coords, moore=False):
         seed_coords (tuple) - the coordinates of the seed point
         moore (bool) - whether to use the Moore neighborhood (8-connected) or the Von Neumann neighborhood (4-connected); default is Von Neumann
     """
-    assert lattice_array[tuple(seed_coords)] == 1, 'seed point must be occupied'
+    
+    seed_coords = tuple(seed_coords)
+    
+    assert lattice_array[seed_coords] == 1, 'seed point must be occupied'
 
     lattice_dims = np.ndim(lattice_array)
 
@@ -114,11 +117,11 @@ def branch_distribution(lattice_array, seed_coords, moore=False):
     # Create a network over the non-zero lattice sites
     for index in np.ndindex(lattice_array.shape):
 
-        # Add a node for the current cell
-        G.add_node(index)
-
         # If the current cell is occupied
         if lattice_array[index] > 0:
+
+            # Add a node for the current cell
+            G.add_node(index)
 
             # Define Moore neighbourhood
             offsets = [step for step in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(step) != 0]
@@ -140,11 +143,36 @@ def branch_distribution(lattice_array, seed_coords, moore=False):
                     # Add an edge from the current cell to the neighbor
                     G.add_edge(index, neighbour)
 
-    # Create a figure and axes
-    fig, ax = plt.subplots()
+    # Trace all paths to seed
+    paths = [nx.shortest_path(G, node, seed_coords) for node, degree in G.degree()]
 
-    # Draw the graph
-    pos = {node: node for node in G.nodes}
-    nx.draw(G, pos, ax=ax, node_size=10, node_color='red')
+    # Find non-overlapping nodes
+    path_sets = [set(path) for path in paths]
+    branches = []
+    for _ in range(len(path_sets)):
 
-    return
+        # Sort paths by length
+        path_sets.sort(key=len)
+
+        # Take the longest path
+        longest_path = path_sets.pop()
+
+        if len(longest_path) == 0:
+            break
+
+        # Remove nodes from the longest path from the remaining paths
+        path_sets = [path_set - longest_path for path_set in path_sets]
+
+        longest_path_list = list(longest_path)
+        branches.append(longest_path_list)
+
+    # Count the number of branches of different lengths
+    branch_lengths = [len(branch) for branch in branches]
+    branch_lengths_unique = np.unique(branch_lengths)
+    branch_length_counts = [branch_lengths.count(length) for length in branch_lengths_unique]
+
+    powerlaw_results = pl.Fit(branch_lengths, discrete=True)
+    loglikelihood, p_value = powerlaw_results.loglikelihood_ratio('power_law', 'exponential')
+    print(f'Power-law-over-exponential-likelihood: {loglikelihood}, p = {p_value}')
+
+    return branch_lengths_unique, branch_length_counts, branches

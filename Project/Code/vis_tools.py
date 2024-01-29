@@ -131,3 +131,71 @@ def plot_fractal_dimension(scale_series, n_box_series, coeffs, ax=None, label=No
 
     if ax is None:
         plt.show()
+
+
+def plot_branches(branches, lattice, ax=None, label=None):
+    """
+    Plots the branches of a DLA cluster
+    inputs:
+        branches (list) - a list of lists of nodes (tuples) representing the branches of a DLA cluster
+        lattice (np.ndarray) - a lattice array to display the branches on
+        ax (matplotlib.axes.Axes) - an axis to plot on
+        label (str) - a label for the plot
+    """
+
+    assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    branch_lattice = np.full(lattice.shape, np.nan)
+    for i, branch in enumerate(branches):
+        for node in branch:
+            branch_lattice[node] = i + 1
+    branch_lattice = np.moveaxis(branch_lattice, 0, 1)
+    branch_lattice = np.flip(branch_lattice, axis=0)
+    
+    ax.imshow(branch_lattice, cmap='prism')
+
+    ax.set_xlabel("$x$")
+    ax.set_ylabel("$y$")
+    ax.legend()
+    
+    if label is not None:
+        fig.suptitle("Branches of a DLA cluster")
+    else:
+        fig.suptitle(label)
+
+    plt.axis('off')
+
+    if ax is None:
+        plt.show()
+
+
+def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts, ax=None, label=None):
+    """
+    Plots the distribution of branch lengths in a DLA cluster
+    inputs:
+        branch_lengths_unique (list) - a list of unique branch lengths
+        branch_length_counts (list) - a list of the number of branches of each length
+        ax (matplotlib.axes.Axes) - an axis to plot on
+        label (str) - a label for the plot
+    """
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    ax.scatter(branch_lengths_unique, branch_length_counts, marker='o', label=f'branch length distribution{label}')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    ax.set_xlabel("branch length")
+    ax.set_ylabel("number of branches")
+    ax.legend()
+    fig.suptitle("Distribution of branch lengths in a DLA cluster")
+
+    if ax is None:
+        plt.show()
