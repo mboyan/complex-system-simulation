@@ -217,10 +217,11 @@ def verify_power_law(data, ax=None):
     powerlaw_results = pl.Fit(data, discrete=True)
     loglikelihood, p_value = powerlaw_results.loglikelihood_ratio('power_law', 'exponential')
     plaw_verification = f'Plaw-vs-exp-likelihood:\n{loglikelihood:.4f}, p = {p_value:.4f}'
+    alpha = powerlaw_results.power_law.alpha
     
     # Plot the power law fit
     if ax is not None:
-        alpha = powerlaw_results.power_law.alpha
+        
         xmin = powerlaw_results.power_law.xmin
 
         # Get all the data points for which the power law holds
@@ -238,9 +239,8 @@ def verify_power_law(data, ax=None):
         pdf = np.exp(log_pdf)
 
         # Plot the log-transformed PDF
-        ax.plot(data_sorted, pdf * np.sum(plaw_data), color='r', linestyle='--', label=plaw_verification)
-        ax.set_ylim(0.75, np.max(data) * 2)
-        ax.legend(fontsize='small')
-        return loglikelihood, p_value, alpha
+        # ax.plot(data_sorted, pdf * np.sum(plaw_data), color='r', linestyle='--', label=plaw_verification)
+        # ax.set_ylim(0.75, np.max(data) * 2)
+        # ax.legend(fontsize='small')
         
-    return loglikelihood, p_value
+    return loglikelihood, p_value, alpha
