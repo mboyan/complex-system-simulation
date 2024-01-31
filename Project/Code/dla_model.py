@@ -261,7 +261,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         weights = np.dot(moves, drift_vec) + 1.0
         weights[weights < 0] = 0
         weights /= weights.sum()
-        # print('weights drift: ', weights)
+        print('weights drift: ', weights)
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
 
@@ -368,7 +368,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     
     # Normalize weights
     weights /= np.sum(weights)
-    # print('weights aggregation: ', weights)
+    print('weights aggregation: ', weights)
 
     # Multiply shifted lattices by weights
     weights = np.repeat(weights, lattice_size ** lattice_dims)
