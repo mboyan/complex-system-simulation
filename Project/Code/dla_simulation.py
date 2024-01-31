@@ -123,7 +123,8 @@ def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=1, target_mas
             break
 
     # Check if target mass was reached
-    assert np.sum(current_lattice) >= target_mass, 'target mass not reached within given time steps'
+    if np.sum(current_lattice) < target_mass:
+        print(f'Target mass not reached by {target_mass - np.sum(current_lattice)} within given time steps!')
 
     # Trim frames
     lattice_frames = lattice_frames[:step + 1]
