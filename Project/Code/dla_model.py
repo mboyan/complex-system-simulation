@@ -300,7 +300,7 @@ def move_particles_laminar():
 
 # ===== Aggregation function =====
 
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=None, drift_vec=None, multi_seed = (False,False)):
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=None, drift_vec=None, multi_seed = False):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -345,7 +345,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     # Shift padded lattice by neighbours, then remove the padding
     shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
     
-    if multi_seed[0]:
+    if multi_seed:
         # reshape to get arrays of all possible neighbors for each point
         reshaped_sl = shifted_lattices.reshape(shifted_lattices.shape[0], -1).astype(int)
     
@@ -355,11 +355,8 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
         # set count for zero to 0.5 (highest if it only zeros (no neighbors), lower when there is at least one neighbor)
         nbr_counts[0] = 0.5
 
-        if multi_seed [1]:
-            pass
-        else:
-            # find most occurring neighbor
-            most_occurring_nbrs = nbr_counts.argmax(axis = 0).reshape((lattice_size, lattice_size)) # picks the lowest value when equal amount of neighbors
+        # find most occurring neighbor
+        most_occurring_nbrs = nbr_counts.argmax(axis = 0).reshape((lattice_size, lattice_size)) # picks the lowest value when equal amount of neighbors
 
     # Calculate weights for each attachment direction based on dot product with sun vector
     if sun_vec is not None:
