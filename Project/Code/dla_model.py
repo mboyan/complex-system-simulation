@@ -8,25 +8,27 @@ from itertools import product
 
 # ===== Particle / lattice initialization =====
 
-def init_seeds_bottom(lattice_size, n_seeds):
+def init_seeds_bottom(lattice_size, n_seeds, n_dims=2):
     """
-    Creates equally spaced seeds at the bottom of the lattice.
+    Creates equally spaced seeds along a line at the bottom of the lattice.
     inputs:
-        lattice_size - size of the side of the lattice square 
-        n_seeds - the amount of seeds
+        lattice_size (int) - size of the side of the lattice square 
+        n_seeds (int) - the amount of seeds to generate
+        n_dims (int) - the dimensions of the lattice; defaults to 2
     outputs:
         seed_coords (np.array) - an array of lattice site coordinates for the placement of initial seeds
     """
     assert 1 <= n_seeds <= lattice_size
 
-    bottom = lattice_size - 1
+    x_coords = np.delete(np.arange(0, n_seeds + 1), 0) * int(lattice_size/(n_seeds + 1))
+    rest_coords = np.tile(np.zeros(n_seeds), (1, n_dims - 1))
+    # y_coords = np.zeros(n_seeds)
 
-    x_coords = np.delete(np.arange(0, n_seeds + 1),0) * int(lattice_size/(n_seeds + 1))
-    y_coords = np.repeat(bottom, n_seeds)
+    # seed_coords = np.column_stack((x_coords, y_coords))
+    seed_coords = np.insert(rest_coords, 0, x_coords.reshape((1, -1)), axis=0).T
 
-    seed_coords = np.column_stack((y_coords, x_coords))
+    return seed_coords.astype(int)
 
-    return seed_coords
 
 def init_lattice(lattice_size, seed_coords):
     """
@@ -178,8 +180,6 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
 
         # Pick random particle coordinates from the selected slice
         regen_coords = coords[slice_selected][np.random.choice(coords[slice_selected].shape[0], size=n_particles, replace=True)]
-        print(n_particles)
-        print('regen_coords: ', regen_coords.shape)
 
     else:
         # Regenerate particles randomly wherever there are no seeds
@@ -261,7 +261,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         weights = np.dot(moves, drift_vec) + 1.0
         weights[weights < 0] = 0
         weights /= weights.sum()
-        print('weights drift: ', weights)
+        # print('weights drift: ', weights)
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
 
@@ -298,7 +298,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
 
 # ===== Aggregation function =====
 
-def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=None, drift_vec=None, multi_seed = False):
+def aggregate_particles(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=None, drift_vec=None, multi_seed=False):
     """
     Check if particles are neighbouring seeds on the lattice.
     If they are, place new seeds.
@@ -365,7 +365,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     
     # Normalize weights
     weights /= np.sum(weights)
-    print('weights aggregation: ', weights)
+    # print('weights aggregation: ', weights)
 
     # Multiply shifted lattices by weights
     weights = np.repeat(weights, lattice_size ** lattice_dims)
@@ -378,7 +378,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > np.max(weights) * u)
 
     # Update lattice
-    if multi_seed[0] or multi_seed[1]:
+    if multi_seed:
         lattice[tuple(particles[new_seed_indices].T)] = most_occurring_nbrs[tuple(particles[new_seed_indices].T)]
     else:
         lattice[tuple(particles[new_seed_indices].T)] = 1
