@@ -102,7 +102,7 @@ def run_dla(lattice_size, max_timesteps, seeds, particle_density, target_mass=No
             # Check difference between new state and old state
             new_aggregate_indices = np.argwhere(new_lattice - current_lattice)
             if new_aggregate_indices.shape[0] > 0:
-                seed_compare = np.repeat(seeds[0], new_aggregate_indices.shape[0])
+                seed_compare = np.tile(seeds[0], new_aggregate_indices.shape[0])
                 seed_compare = seed_compare.reshape(new_aggregate_indices.shape)
                 new_radius = np.max(np.linalg.norm(new_aggregate_indices - seed_compare, axis=1))
                 if new_radius > max_radius:
