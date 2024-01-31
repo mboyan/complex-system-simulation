@@ -381,7 +381,7 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
 
             # Plot fractal dimension (coarse-graining mode)
             vt.plot_fractal_dimension(scale_series, n_box_series, coeffs, ax=axs[ax_ct],
-                                      title="Lattice scaling factor ($s=1/\epsilon$) vs\nnumber of occupied lattice sites ($N(1/\epsilon)$)")
+                                      title="Lattice scaling factor ($s=1/\\epsilon$) vs\nnumber of occupied lattice sites ($N(1/\\epsilon)$)")
             ax_ct += 1
 
         if plot_branch_distr:
@@ -505,11 +505,13 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
 
     if plot_drift_norm:
 
+        drift_vec_norms = drift_vec_series[:5]
+
         final_time_steps_dn = []
         fdr_list_dn = []
         fdc_list_dn = []
         branch_slopes_dn = []
-        for drift_vec in drift_vec_series:
+        for drift_vec in drift_vec_norms:
             driftvec_filtered = sim_results[sim_results['drift_vec'].apply(lambda x: x[1] == drift_vec[1])]
             growth_series_mean_dn, fdr_dn, fdc_dn, slope_dn = analyse_environmental_params(driftvec_filtered, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
         
@@ -519,7 +521,7 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
             branch_slopes_dn.append(slope_dn)
 
         drift_vec_list = []
-        for vec in drift_vec_series:
+        for vec in drift_vec_norms:
             drift_vec_list.append(np.linalg.norm(vec))
 
         if growth:
