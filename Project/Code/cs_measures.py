@@ -241,5 +241,6 @@ def verify_power_law(data, ax=None):
         ax.plot(data_sorted, pdf * np.sum(plaw_data), color='r', linestyle='--', label=plaw_verification)
         ax.set_ylim(0.75, np.max(data) * 2)
         ax.legend(fontsize='small')
-
+        return loglikelihood, p_value, alpha
+        
     return loglikelihood, p_value

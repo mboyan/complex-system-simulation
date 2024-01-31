@@ -378,7 +378,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > np.max(weights) * u)
 
     # Update lattice
-    if multi_seed[0] or multi_seed[1]:
+    if multi_seed:
         lattice[tuple(particles[new_seed_indices].T)] = most_occurring_nbrs[tuple(particles[new_seed_indices].T)]
     else:
         lattice[tuple(particles[new_seed_indices].T)] = 1
