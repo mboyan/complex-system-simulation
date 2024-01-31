@@ -226,14 +226,16 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     outputs:
         the particle array after one step (numpy.ndarray)
     """
-    assert len(periodic) == particles_in.shape[1], 'dimension mismatch between particles periodicity tuple'
 
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
 
+    # Adjust periodicity tuple
+    periodic = (periodic * (lattice_dims // len(periodic)) + periodic[:lattice_dims % len(periodic)]) if len(periodic) != 0 else ()
+
     assert lattice_dims > 1
     assert lattice_dims == particles_in.shape[1], 'dimension mismatch between lattice and particles'
-    assert lattice_dims == len(periodic), 'dimension mismatch between lattice and periodicity tuple'
+    # assert lattice_dims == len(periodic), 'dimension mismatch between lattice and periodicity tuple'
     assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
     if obstacles is not None:
         assert lattice_dims == np.ndim(obstacles), 'dimension mismatch between lattice and obstacles'
@@ -259,7 +261,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         weights = np.dot(moves, drift_vec) + 1.0
         weights[weights < 0] = 0
         weights /= weights.sum()
-        # print('weights drift: ', weights)
+        print('weights drift: ', weights)
 
         perturbations = moves[np.random.choice(len(moves), particles_in.shape[0], p = weights)]
 
@@ -292,10 +294,6 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         particles_out[mask] = np.where(np.repeat(in_obstacles, lattice_dims).reshape(particles_out[mask].shape), particles_in[mask], particles_out[mask])
     
     return particles_out
-
-
-def move_particles_laminar():
-    pass
 
 
 # ===== Aggregation function =====
@@ -367,7 +365,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     
     # Normalize weights
     weights /= np.sum(weights)
-    # print('weights aggregation: ', weights)
+    print('weights aggregation: ', weights)
 
     # Multiply shifted lattices by weights
     weights = np.repeat(weights, lattice_size ** lattice_dims)
@@ -380,7 +378,7 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     new_seed_indices = np.argwhere(summed_nbrs_lattice[tuple(particles.T)] > np.max(weights) * u)
 
     # Update lattice
-    if multi_seed:
+    if multi_seed[0] or multi_seed[1]:
         lattice[tuple(particles[new_seed_indices].T)] = most_occurring_nbrs[tuple(particles[new_seed_indices].T)]
     else:
         lattice[tuple(particles[new_seed_indices].T)] = 1

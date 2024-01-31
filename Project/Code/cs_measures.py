@@ -8,7 +8,7 @@ import networkx as nx
 import powerlaw as pl
 from itertools import product
 
-def fractal_dimension_clusters(lattice_array):
+def fractal_dimension_clusters(lattice_array, fit=False):
     """
     Calculate the Minkowski dimension (box-counting method) of a structure on a lattice
     by clustering regions of cells with varying sizes and counting the number of clusters
@@ -16,6 +16,7 @@ def fractal_dimension_clusters(lattice_array):
     number of clusters vs cluster size to determine the fractal dimension.
     inputs:
         lattice_array (np.ndarray) - represents a lattice with equal measure in each dimension (should be a power of 2)
+        fit (bool) - whether to perform a linear regression on the log-log plot of number of clusters vs inverse cluster size; defaults to False
     outputs:
         dim_box_series (np.ndarray) - a series of box dimensions
         n_box_series (np.ndarray) - a series of occupied box counts
@@ -63,20 +64,25 @@ def fractal_dimension_clusters(lattice_array):
     
 
     # Perform linear regression on results
-    log_scale_series = np.log(scale_series)
-    log_n_box_series = np.log(n_box_series)
-    coeffs = np.polyfit(log_scale_series, log_n_box_series, 1)
+    if fit:
+        coeffs = linreg_fdim(scale_series, n_box_series)
+    else:
+        coeffs = None
 
     return dim_box_series, scale_series, n_box_series, coeffs
 
 
-def fractal_dimension_radius(radius_series, n_box_series):
+def fractal_dimension_radius(radius_series, n_box_series, fit=False):
     """
     Calculate the Minkowski dimension (box-counting method) of a DLA structure by
     taking the maximum radius of the structure from the initial seed point as a scale reference.
     inputs:
-        radius_series - a series of maximum radii from the initial seed point, representing different scales
-        n_box_series - a series of occupied box counts corresponding to the radius series
+        radius_series (ndarray of float) - a series of maximum radii from the initial seed point, representing different scales
+        n_box_series (ndarray of int) - a series of occupied box counts corresponding to the radius series
+        fit (bool) - whether to perform a linear regression on the log-log plot of number of clusters vs radius; defaults to False
+    outputs:
+        dim_box_series (np.ndarray of float) - a series of box dimensions
+        coeffs (np.ndarray of float) - the coefficients of the linear regression
     """
     assert radius_series.shape == n_box_series.shape, 'radius_series and n_box_series must have the same shape'
 
@@ -84,16 +90,15 @@ def fractal_dimension_radius(radius_series, n_box_series):
     dim_box_series = np.log(n_box_series) / np.log(radius_series)
 
     # Perform linear regression
-    # for r in radius_series: print(r)
-    # print(n_box_series)
-    log_radius_series = np.log(radius_series)
-    log_n_box_series = np.log(n_box_series)
-    coeffs = np.polyfit(log_radius_series, log_n_box_series, 1)
+    if fit:
+        coeffs = linreg_fdim(radius_series, n_box_series)
+    else:
+        coeffs = None
 
     return dim_box_series, coeffs
 
 
-def branch_distribution(lattice_array, seed_coords, moore=False):
+def branch_distribution(lattice_array, seed_coords, moore=False, verify_plaw=False):
     """
     Computes the branch distribution of a DLA structure by tracing the shortest paths
     from the branch tips to the seed point, identifying the membership of a lattice site
@@ -103,6 +108,11 @@ def branch_distribution(lattice_array, seed_coords, moore=False):
         lattice_array (np.ndarray) - a lattice grid where non-zero values represent occupied lattice sites
         seed_coords (tuple) - the coordinates of the seed point
         moore (bool) - whether to use the Moore neighborhood (8-connected) or the Von Neumann neighborhood (4-connected); default is Von Neumann
+        verify_plaw (bool) - when True, verifies whether the branch length distribution follows a power law distribution; default is False
+    outputs:
+        branch_lengths_unique (np.ndarray) - an array of unique branch lengths
+        branch_length_counts (np.ndarray) - an array of corresponding branch length counts
+        branches (list) - a list of lists of nodes (tuples) representing the branches of a DLA cluster
     """
     
     seed_coords = tuple(seed_coords)
@@ -171,8 +181,65 @@ def branch_distribution(lattice_array, seed_coords, moore=False):
     branch_lengths_unique = np.unique(branch_lengths)
     branch_length_counts = [branch_lengths.count(length) for length in branch_lengths_unique]
 
-    powerlaw_results = pl.Fit(branch_lengths, discrete=True)
-    loglikelihood, p_value = powerlaw_results.loglikelihood_ratio('power_law', 'exponential')
-    print(f'Power-law-over-exponential-likelihood: {loglikelihood}, p = {p_value}')
+    if verify_plaw:
+        verify_power_law(branch_lengths)
 
     return branch_lengths_unique, branch_length_counts, branches
+
+
+def linreg_fdim(scale_series, n_box_series):
+    """Perform linear regression on the log-log plot of the fractal dimension results
+    inputs:
+        scale_series (np.ndarray) - a series of scale factors
+        n_box_series (np.ndarray) - a series of occupied box counts
+    outputs:
+        coeffs (np.ndarray) - the coefficients of the linear regression
+    """
+    assert scale_series.shape == n_box_series.shape, 'scale_series and n_box_series must have the same shape'
+
+    log_radius_series = np.log(scale_series)
+    log_n_box_series = np.log(n_box_series)
+    coeffs = np.polyfit(log_radius_series, log_n_box_series, 1)
+
+    return coeffs
+
+
+def verify_power_law(data, ax=None):
+    """
+    Verifies whether a dataset follows a power law distribution by fitting a power law function
+    and comparing it to an exponential one.
+    inputs:
+        data (list) - a list of data points
+    outputs:
+        loglikelihood (float) - the log-likelihood of the power law fit
+        p_value (float) - the p-value of the power law fit
+    """
+    powerlaw_results = pl.Fit(data, discrete=True)
+    loglikelihood, p_value = powerlaw_results.loglikelihood_ratio('power_law', 'exponential')
+    plaw_verification = f'Plaw-vs-exp-likelihood:\n{loglikelihood:.4f}, p = {p_value:.4f}'
+    
+    # Plot the power law fit
+    if ax is not None:
+        alpha = powerlaw_results.power_law.alpha
+        xmin = powerlaw_results.power_law.xmin
+
+        # Get all the data points for which the power law holds
+        plaw_data = np.array(data)[data >= xmin]
+
+        # Calculate the normalization constant C
+        # avg = np.mean(plaw_data)
+        # C = (alpha - 1) * (avg ** alpha - 1)
+
+        # Compute the log-transformed PDF
+        data_sorted = np.sort(data)
+        log_x = np.log(data_sorted)
+        # log_pdf = np.log(C) - alpha * log_x
+        log_pdf = - alpha * log_x
+        pdf = np.exp(log_pdf)
+
+        # Plot the log-transformed PDF
+        ax.plot(data_sorted, pdf * np.sum(plaw_data), color='r', linestyle='--', label=plaw_verification)
+        ax.set_ylim(0.75, np.max(data) * 2)
+        ax.legend(fontsize='small')
+
+    return loglikelihood, p_value

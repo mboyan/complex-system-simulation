@@ -5,8 +5,120 @@ This module contains functions for visualising plots and animations of DLA simul
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import seaborn as sns
 from matplotlib import animation
 from IPython.display import HTML
+
+import cs_measures as csm
+
+def plot_lattice_2D(lattice, cmap='tab20b', ax=None, title=None):
+    """
+    Plots a 2D lattice
+    inputs:
+        lattice (np.ndarray) - a 2D lattice array
+        cmap (str) - a matplotlib colormap; defaults to 'tab20b'
+        ax (matplotlib.axes.Axes) - an axis to plot on; defaults to None
+        title (str) - a title for the plot; defaults to None
+    """
+
+    assert np.ndim(lattice) == 2, 'input array must have 2 dimensions'
+
+    if ax is None:
+        fig, ax = plt.subplots()
+        fig.set_size_inches(lattice.shape[0]*0.05, lattice.shape[1]*0.05)
+    else:
+        fig = ax.get_figure()
+    
+    # Align with plot orientation
+    lattice = np.moveaxis(lattice, 0, 1)
+    lattice = np.flip(lattice, axis=0)
+
+    ax.imshow(lattice, cmap=cmap)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+
+    if title is not None:
+        ax.set_title(title)
+    else:
+        ax.set_title("DLA cluster")
+
+    if ax is None:
+        plt.show()
+
+
+def plot_lattice_3D(lattice, cmap='tab20b', ax=None, title=None):
+    """
+    Plots a 3D lattice
+    inputs:
+        lattice (np.ndarray) - a 3D lattice array
+        cmap (str) - a matplotlib colormap; defaults to 'tab20b'
+        ax (matplotlib.axes.Axes) - an axis to plot on; defaults to None
+        title (str) - a title for the plot; defaults to None
+    """
+
+    assert np.ndim(lattice) == 3, 'input array must have 3 dimensions'
+
+    if ax is None:
+        fig, ax = plt.subplots(projection='3d')
+    else:
+        fig = ax.get_figure()
+
+    # Create a colormap that maps integers to colors
+    cmap = cm.get_cmap(cmap)
+
+    # Normalize lattice data
+    norm = lattice / np.max(lattice)
+
+    # Create a 3D plot where each voxel is colored based on its value
+    cols = cmap(norm)
+
+    # Set alpha channel
+    cols[..., -1] = norm*0.75
+
+    ax.voxels(lattice, facecolors=cols, linewidth=0, alpha=0.6)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+
+    if title is not None:
+        ax.set_title(title)
+    else:
+        ax.set_title("DLA cluster")
+
+    if ax is None:
+        plt.show()
+
+
+def plot_lattice(lattice, branches=None, ax=None, title=None):
+    """
+    Check lattice data and dispatch to either 2D or 3D plot function.
+    inputs:
+        lattice (np.ndarray) - a 2D or 3D lattice array
+        branches (list) - a list of lists of nodes (tuples) representing the branches of a DLA cluster;
+            if provided, the branches will be assigned different colours; defaults to None
+        ax (matplotlib.axes.Axes) - an axis to plot on; defaults to None
+        title (str) - a title for the plot; defaults to None
+    """
+    assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
+
+    if branches is None:
+        branch_lattice = np.array(lattice)
+        cmap = 'tab20b'
+    else:
+        # Assign colours based on branches
+        branch_lattice = np.full(lattice.shape, np.nan)
+        for i, branch in enumerate(branches):
+            for node in branch:
+                branch_lattice[node] = i + 1
+        cmap = 'prism'
+    
+    if np.ndim(lattice) == 2:
+        plot_lattice_2D(branch_lattice, cmap, ax, title)
+    elif np.ndim(lattice) == 3:
+        plot_lattice_3D(branch_lattice, cmap, ax, title)
+    else:
+        raise ValueError('input array must have 2 or 3 dimensions')
+
 
 def animate_lattice_2D(lattice_data_frames, interval=100):
     """
@@ -14,6 +126,8 @@ def animate_lattice_2D(lattice_data_frames, interval=100):
     inputs:
         lattice_data_frames (3D numpy.ndarray) - time frames of lattice states
         interval (int) - time between frames in milliseconds
+    outputs:
+        an HTML5 video of the animation
     """
 
     assert np.ndim(lattice_data_frames) == 3, 'error in input array dimensions'
@@ -46,6 +160,8 @@ def animate_lattice_3D(lattice_data_frames, interval=100):
     inputs:
         lattice_data_frames (3D numpy.ndarray) - time frames of lattice states
         interval (int) - time between frames in milliseconds
+    outputs:
+        an HTML5 video of the animation
     """
 
     assert np.ndim(lattice_data_frames) == 4, 'error in input array dimensions'
@@ -94,6 +210,8 @@ def animate_lattice(lattice_data_frames, interval):
     inputs:
         lattice_data_frames (3D numpy.ndarray) - time frames of lattice states
         interval (int) - time between frames in milliseconds
+    outputs:
+        an HTML5 video of the animation
     """
     
     if np.ndim(lattice_data_frames) == 3:
@@ -107,81 +225,55 @@ def animate_lattice(lattice_data_frames, interval):
     return anim
 
 
-def plot_fractal_dimension(scale_series, n_box_series, coeffs, ax=None, label=None):
+def plot_fractal_dimension(scale_series, n_box_series, coeffs, ax=None, title=None):
     """
     Plots the relationship between N(epsilon) (number of boxes of size epsilon)
     and 1/epsilon (inverse of box size) on a log-log plot, illustrating the analysed fractal dimension
+    inputs:
+        scale_series (np.ndarray) - a series of box sizes
+        n_box_series (np.ndarray) - a series of occupied box counts
+        coeffs (np.ndarray) - the coefficients of the linear regression
+        ax (matplotlib.axes.Axes) - an axis to plot on; defaults to None
+        title (str) - a title for the plot; defaults to None
     """
 
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-
-    ax.loglog(scale_series, n_box_series, marker='o', label=f'scale-mass relationship{label}')
+    
+    ax.scatter(scale_series, n_box_series, marker='.', label=f'scale-mass relationship')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
     log_scale_series = np.log(scale_series)
     log_n_boxes_fit = coeffs[0] * log_scale_series + coeffs[1]
     n_boxes_fit = np.exp(log_n_boxes_fit)
-    ax.loglog(scale_series, n_boxes_fit, linestyle='--', color='red', label=f'regression ($D={coeffs[0]}$)')
+    sort_indices = np.argsort(scale_series)
+    ax.loglog(scale_series[sort_indices], n_boxes_fit[sort_indices], linestyle='--', color='red', label=f'regression ($D={coeffs[0]:.5f}$)')
+    
+    ax.set_xlabel("$s$")
+    ax.set_ylabel("$N(s)$")
+    ax.legend(fontsize='small')
 
-    ax.set_xlabel("$1/\\epsilon$")
-    ax.set_ylabel("$N(\\epsilon)$")
-    ax.legend()
-    fig.suptitle("Lattice scaling factor vs number of occupied lattice sites")
+    if title is None:
+        ax.set_title("Lattice scaling factor (s) vs\nnumber of occupied lattice sites (N)")
+    else:
+        ax.set_title(title)
 
     if ax is None:
         plt.show()
 
 
-def plot_branches(branches, lattice, ax=None, label=None):
-    """
-    Plots the branches of a DLA cluster
-    inputs:
-        branches (list) - a list of lists of nodes (tuples) representing the branches of a DLA cluster
-        lattice (np.ndarray) - a lattice array to display the branches on
-        ax (matplotlib.axes.Axes) - an axis to plot on
-        label (str) - a label for the plot
-    """
-
-    assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
-
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
-
-    branch_lattice = np.full(lattice.shape, np.nan)
-    for i, branch in enumerate(branches):
-        for node in branch:
-            branch_lattice[node] = i + 1
-    branch_lattice = np.moveaxis(branch_lattice, 0, 1)
-    branch_lattice = np.flip(branch_lattice, axis=0)
-    
-    ax.imshow(branch_lattice, cmap='prism')
-
-    ax.set_xlabel("$x$")
-    ax.set_ylabel("$y$")
-    ax.legend()
-    
-    if label is not None:
-        fig.suptitle("Branches of a DLA cluster")
-    else:
-        fig.suptitle(label)
-
-    plt.axis('off')
-
-    if ax is None:
-        plt.show()
-
-
-def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts, ax=None, label=None):
+def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts, branches=None, ax=None, title=None):
     """
     Plots the distribution of branch lengths in a DLA cluster
     inputs:
         branch_lengths_unique (list) - a list of unique branch lengths
         branch_length_counts (list) - a list of the number of branches of each length
-        ax (matplotlib.axes.Axes) - an axis to plot on
-        label (str) - a label for the plot
+        branches (list) - a list of lists of nodes (tuples) representing the branches of a DLA cluster; if provided,
+            the power law distribution will be verified; defaults to None
+        ax (matplotlib.axes.Axes) - an axis to plot on; defaults to None
+        title (str) - a label for the plot; defaults to None
     """
 
     if ax is None:
@@ -189,13 +281,50 @@ def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts,
     else:
         fig = ax.get_figure()
 
-    ax.scatter(branch_lengths_unique, branch_length_counts, marker='o', label=f'branch length distribution{label}')
+    ax.scatter(branch_lengths_unique, branch_length_counts, marker='.')
+
     ax.set_xscale('log')
     ax.set_yscale('log')
-    ax.set_xlabel("branch length")
-    ax.set_ylabel("number of branches")
+    ax.set_xlabel("Branch mass ($L$)")
+    ax.set_ylabel("$N(L)$")
     ax.legend()
-    fig.suptitle("Distribution of branch lengths in a DLA cluster")
+
+    if title is None:
+        ax.set_title("Distribution of branch lengths in a DLA cluster")
+    else:
+        ax.set_title(title)
+
+    if branches is not None:
+        branch_lengths = [len(branch) for branch in branches]
+        csm.verify_power_law(branch_lengths, ax=ax)
+
+    if ax is None:
+        plt.show()
+
+
+def plot_mass_over_time(mass_series, ax=None, title=None):
+    """
+    Plots the mass of a DLA cluster over time
+    inputs:
+        mass_series (ndarray) - an array of tuples (t, m) indicating the time indices and masses at each time step
+    """
+    
+    assert np.ndim(mass_series) == 2, 'input array must have 2 dimensions'
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+    
+    sns.lineplot(x=mass_series[:, 0], y=mass_series[:, 1], ax=ax, legend=False)
+
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Mass")
+
+    if title is None:
+        ax.set_title("Mass of a DLA cluster over time")
+    else:
+        ax.set_title(title)
 
     if ax is None:
         plt.show()
