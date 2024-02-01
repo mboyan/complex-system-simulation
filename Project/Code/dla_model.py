@@ -21,7 +21,7 @@ def init_seeds_bottom(lattice_size, n_seeds, n_dims=2):
     assert 1 <= n_seeds <= lattice_size
 
     x_coords = np.delete(np.arange(0, n_seeds + 1), 0) * int(lattice_size/(n_seeds + 1))
-    rest_coords = np.tile(np.zeros(n_seeds), (1, n_dims - 1))
+    rest_coords = np.tile(np.zeros(n_seeds), (n_dims - 1, 1))
     # y_coords = np.zeros(n_seeds)
 
     # seed_coords = np.column_stack((x_coords, y_coords))
@@ -197,7 +197,7 @@ def regen_probabilities(nbr_coords, nbr_weights):
     outputs:
         bndry_weights (np.ndarray) - an array of probabilities for regenerating particles at the boundaries in each dimension
     """
-    assert nbr_coords.shape[0] == nbr_weights.shape[0], 'dimension mismatch between neighbourhood coordinates and weights'
+    assert nbr_coords.shape[0] == nbr_weights.shape[0], f'dimension mismatch between neighbourhood coordinates ({nbr_coords.shape[0]}) and weights ({nbr_weights.shape[0]})'
     
     # Infer dimensions from number of coordinates
     lattice_dims = nbr_coords.shape[1]
@@ -234,11 +234,11 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     periodic = (periodic * (lattice_dims // len(periodic)) + periodic[:lattice_dims % len(periodic)]) if len(periodic) != 0 else ()
 
     assert lattice_dims > 1
-    assert lattice_dims == particles_in.shape[1], 'dimension mismatch between lattice and particles'
+    assert lattice_dims == particles_in.shape[1], f'dimension mismatch between lattice ({lattice_dims}) and particles ({particles_in.shape[1]})'
     # assert lattice_dims == len(periodic), 'dimension mismatch between lattice and periodicity tuple'
     assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
     if obstacles is not None:
-        assert lattice_dims == np.ndim(obstacles), 'dimension mismatch between lattice and obstacles'
+        assert lattice_dims == np.ndim(obstacles), f'dimension mismatch between lattice ({lattice_dims}) and obstacles ({np.ndim(obstacles)})'
 
     # Define Moore neighbourhood
     moves = [step for step in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(step) != 0]
@@ -255,7 +255,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     # Create perturbation vectors
     if drift_vec is not None:
 
-        assert len(drift_vec) == lattice_dims, 'dimension mismatch between drift vector and lattice'
+        assert len(drift_vec) == lattice_dims, f'dimension mismatch between drift vector ({len(drift_vec)}) and lattice ({lattice_dims})'
 
         # Calculate weights for each attachment direction based on dot product with drift vector
         weights = np.dot(moves, drift_vec) + 1.0
@@ -321,12 +321,12 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     lattice_dims = np.ndim(lattice)
     lattice_size = lattice.shape[0]
     assert lattice_dims > 1
-    assert lattice_dims == particles.shape[1], 'dimension mismatch between lattice and particles'
+    assert lattice_dims == particles.shape[1], f'dimension mismatch between lattice ({lattice_dims}) and particles ({particles.shape[1]})'
     assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
     if sun_vec is not None:
-        assert len(sun_vec) == lattice_dims, 'dimension mismatch between sun vector and lattice'
+        assert len(sun_vec) == lattice_dims, f'dimension mismatch between sun vector ({len(sun_vec)}) and lattice ({lattice_dims})'
     if obstacles is not None:
-        assert lattice_dims == np.ndim(obstacles), 'dimension mismatch between lattice and obstacles'
+        assert lattice_dims == np.ndim(obstacles), f'dimension mismatch between lattice ({lattice_dims}) and obstacles ({np.ndim(obstacles)})'
 
     # Define particle neighbourhoods (Moore)
     nbrs = [neighbor for neighbor in product([0, 1, -1], repeat=lattice_dims) if np.linalg.norm(neighbor) != 0]

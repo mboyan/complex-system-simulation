@@ -63,6 +63,7 @@ def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=1, target_mas
 
     # Initialize a predefined number of seeds at the bottom of the lattice
     seeds = dm.init_seeds_bottom(lattice_size, n_seeds, lattice_dims)
+    # print(f'Initial seeds: {seeds}')
 
     # Initialize lattice
     lattice_start = dm.init_lattice(lattice_size, seeds)
@@ -237,7 +238,7 @@ def analyse_dla_patterns(n_sims, lattice_size_series, max_timesteps_series, n_se
             
             # Compute branch distribution of current simulation
             if calc_branch_distr:
-                branch_distribution = csm.branch_distribution(lattice_frames[-1], seeds[0])
+                branch_distribution = csm.branch_distribution(lattice_frames[-1], seeds[0], moore=sim_params['aggr_moore'])
                 sim_measures['branch_lengths_unique'] = branch_distribution[0]
                 sim_measures['branch_length_counts'] = branch_distribution[1]
                 sim_measures['branches'] = branch_distribution[2]
