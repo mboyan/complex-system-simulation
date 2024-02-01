@@ -420,11 +420,33 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
 
 def analyse_environmental_params(sim_results_param, growth = False, fdr=False, fdc=False, branch=False):
     """
+    Analyzes the structural features and 'coralness' of the corals for one value of a changed parameter.
+    Four things are analyzed:
+    1. Speed of growth, determined by the amount of time steps it takes to get to the target mass.
+    2. Fractal Dimension, using the radius to determine the scale.
+    3. Fractal Dimension, using coarse graining to determine the scale.
+    4. Slope of powerlaw found for the length of the DLA branches.
+
+    input:
+        - sim_results_param (np.array): the results of multiple runs of the simulation for the specific value of 
+            a parameter.
+        - growth (Boolean): whether the speed of growth (1) is given as output.
+        - fdr (Boolean): whether the fractal dimension using radius scale (2) is given as output.
+        - fdc (Boolean): whether the fractal dimension using coarse graining scale (3) is given as output.
+        - branch (Boolean): whether the slope the power law fitted to the branch sizes (4) is given as output.
+    
+    output:
+        - growth_series_mean (float): the average amount of time steps before the target mass is reached.
+        - fdr (float): fractal dimension determined with radius scale 
+        - fdc (float): fractal dimension determined with coarse-graining scale
+        - slope (float): slope of the power law fitted to the branch sizes
     """
+    # 1. Speed of growth (time steps needed to reach target mass)
     if growth:
         growth_series = np.array([len(measures['mass_series']) for measures in sim_results_param['sim_measures']])
         growth_series_mean = np.mean(growth_series)
 
+    # 2. Fractal Dimension with Radius
     if fdr:
         # Trim series to the same length
         min_length = np.min([len(measures['fdr_scale_series']) for measures in sim_results_param['sim_measures']])
@@ -434,14 +456,18 @@ def analyse_environmental_params(sim_results_param, growth = False, fdr=False, f
         scale_series_trimmed = scale_series_trimmed.flatten()
         n_box_series_trimmed = n_box_series_trimmed.flatten()
 
-        # Perform linear regression on results; returns [slope, intersect]
+        # Perform linear regression on results; use the slope
         fdr = csm.linreg_fdim(scale_series_trimmed, n_box_series_trimmed)[0]
 
+    # 3. Fractal Dimension with Coarse Graining
     if fdc:
         scale_series = np.array([measures['fdc_scale_series'] for measures in sim_results_param['sim_measures']]).flatten()
         n_box_series = np.array([measures['fdc_n_box_series'] for measures in sim_results_param['sim_measures']]).flatten()
+        
+        # Perform linear regression; use the slope
         fdc = csm.linreg_fdim(scale_series, n_box_series)[0]
 
+    # 4. Branch length distribution fitted with a power law
     if branch:
         branch_lengths = [measures['branch_lengths_unique'] for measures in sim_results_param['sim_measures']]
         branch_length_counts = [measures['branch_length_counts'] for measures in sim_results_param['sim_measures']]
@@ -459,12 +485,21 @@ def analyse_environmental_params(sim_results_param, growth = False, fdr=False, f
         branch_length_ct_mean = np.array([np.mean(branch_length_ct_flat[np.argwhere(branch_lengths_flat == length)]) for length in branch_lengths_unique])
         slope = pl.Fit(branch_length_ct_mean).power_law.alpha
 
-        return growth_series_mean, fdr, fdc, slope
+    return growth_series_mean, fdr, fdc, slope
 
 
-def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = False, growth = False, fdr=False, fdc=False, branch=False):
+def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = False, plot_drift_angle = False, plot_nutrient_density = False, growth = False, fdr=False, fdc=False, branch=False):
     """
     Unpacks the results of a DLA simulation series, calculates statistics and plots the results.
+    Four environmental parameters of the simulation that can be varied:
+    1. Sun vector length/norm (determines 'strength' of the preferential upward attachment)
+    2. Drift vector length/norm (strength of the drift at a set angle (45 degrees))
+    3. Drift vector angle (theta)
+    4. Nutrient density (amount of initial particles)
+
+    The variations in these parameters can be analyzed using four metrics as described in the function analyse_environmental_params.
+
+    This function plots the variations in these four metrics over the variations in the environmental parameters.
     """
     assert isinstance(sim_results, pd.DataFrame), 'sim_results must be a pandas DataFrame'
 
@@ -478,13 +513,17 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
     drift_vec_series = sim_results['drift_vec'].apply(tuple).unique()
     sun_vec_series = sim_results['sun_vec'].apply(tuple).unique()
 
+    # 1. Changes in sun vector (norm/strength is varied)
     if plot_sun:
+        # Create lists to save
         final_time_steps_sv = []
         fdr_list_sv = []
         fdc_list_sv = []
         branch_slopes_sv = []
+        # Loop over different parameter values
         for sun_vec in sun_vec_series:
             sunvec_filtered = sim_results[sim_results['sun_vec'].apply(lambda x: x[1] == sun_vec[1])]
+
             growth_series_mean_sv, fdr_sv, fdc_sv, slope_sv = analyse_environmental_params(sunvec_filtered, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
         
             final_time_steps_sv.append(growth_series_mean_sv)
@@ -494,17 +533,18 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
 
         if growth:
             # Plot Growth
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), final_time_steps_sv, '|s|', 'Time when max reached', 'Growth')
+            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), final_time_steps_sv, 'Norm of sun vector: $|\\vec{s}|$', f'Time steps needed to reach mass {target_mass_series[0]}', 'Sun: Speed of Growth')
         if fdr:
             # Plot Fractal Dimension radius
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), fdr_list_sv, '|s|', 'Fractal Dimension', 'Radius')
+            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), fdr_list_sv, 'Norm of sun vector: $|\\vec{s}|$', 'Fractal Dimension', 'Sun: Fractal Dimension (radius)')
         if fdc:
             # Plot Fractal Dimension coarse grain
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), fdc_list_sv, '|s|', 'Fractal Dimension', 'Coarse graining')
+            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), fdc_list_sv, 'Norm of sun vector: $|\\vec{s}|$', 'Fractal Dimension', 'Sun: Fractal Dimension (coarse graining)')
         if branch:
             # Plot Branching Slope
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), branch_slopes_sv, '|s|', 'Branch Slope', 'Branching!')
+            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), branch_slopes_sv, 'Norm of sun vector: $|\\vec{s}|$', 'Powerlaw Slope', 'Sun: Slope of Branch Distribution')
 
+    # 2. Changes in the size (norm) of the drift vector
     if plot_drift_norm:
 
         drift_vec_norms = drift_vec_series[:5]
@@ -514,7 +554,7 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
         fdc_list_dn = []
         branch_slopes_dn = []
         for drift_vec in drift_vec_norms:
-            driftvec_filtered = sim_results[sim_results['drift_vec'].apply(lambda x: x[1] == drift_vec[1])]
+            driftvec_filtered = sim_results[sim_results['drift_vec'].apply(lambda x: x[0] == drift_vec[0] and x[1] == drift_vec[1])]
             growth_series_mean_dn, fdr_dn, fdc_dn, slope_dn = analyse_environmental_params(driftvec_filtered, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
         
             final_time_steps_dn.append(growth_series_mean_dn)
@@ -528,18 +568,87 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
 
         if growth:
             # Plot Growth
-            env_param_plot(drift_vec_list, final_time_steps_dn, '|d|', 'Time when max reached', 'Growth')
+            env_param_plot(drift_vec_list, final_time_steps_dn, 'Norm of drift vector: $|\\vec{d}|$', f'Time steps needed to reach mass {target_mass_series[0]}', 'Drift Norm: Speed of Growth')
         if fdr:
             # Plot Fractal Dimension radius
-            env_param_plot(drift_vec_list, fdr_list_dn, '|d|', 'Fractal Dimension', 'Radius')
+            env_param_plot(drift_vec_list, fdr_list_dn, 'Norm of drift vector: $|\\vec{d}|$', 'Fractal Dimension', 'Drift Norm: Fractal Dimension (radius)')
         if fdc:
             # Plot Fractal Dimension coarse grain
-            env_param_plot(drift_vec_list, fdc_list_dn, '|d|', 'Fractal Dimension', 'Coarse graining')
+            env_param_plot(drift_vec_list, fdc_list_dn, 'Norm of drift vector: $|\\vec{d}|$', 'Fractal Dimension', 'Drift Norm: Fractal Dimension (coarse graining)')
         if branch:
             # Plot Branching Slope
-            env_param_plot(drift_vec_list, branch_slopes_dn, '|d|', 'Branch Slope', 'Branching!')
+            env_param_plot(drift_vec_list, branch_slopes_dn, 'Norm of drift vector: $|\\vec{d}|$', 'Powerlaw Slope', 'Drift Norm: Slope of Branch Distribution')
 
-    
+    # 3. Changes in the angle of the drift vector
+    if plot_drift_angle:
+        drift_vec_angles = drift_vec_series[5:]
+
+        final_time_steps_da = []
+        fdr_list_da = []
+        fdc_list_da = []
+        branch_slopes_da = []
+
+        for drift_vec in drift_vec_angles:
+            driftvec_filtered_a = sim_results[sim_results['drift_vec'].apply(lambda x: x[0] == drift_vec[0] and x[1] == drift_vec[1])]
+            growth_series_mean_da, fdr_da, fdc_da, slope_da = analyse_environmental_params(driftvec_filtered_a, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
+        
+            final_time_steps_da.append(growth_series_mean_da)
+            fdr_list_da.append(fdr_da)
+            fdc_list_da.append(fdc_da)
+            branch_slopes_da.append(slope_da)
+
+        drift_vec_list = []
+        for vec in drift_vec_norms:
+            drift_vec_list.append(np.linalg.norm(vec))
+
+        if growth:
+            # Plot Growth
+            env_param_plot(drift_vec_list, final_time_steps_da, 'Angle of drift ($^{\\circ}$ C)', f'Time steps needed to reach mass {target_mass_series[0]}', 'Drift Angle: Speed of Growth')
+        if fdr:
+            # Plot Fractal Dimension radius
+            env_param_plot(drift_vec_list, fdr_list_da, 'Angle of drift ($^{\\circ}$ C)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (radius)')
+        if fdc:
+            # Plot Fractal Dimension coarse grain
+            env_param_plot(drift_vec_list, fdc_list_da, 'Angle of drift ($^{\\circ}$ C)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (coarse graining)')
+        if branch:
+            # Plot Branching Slope
+            env_param_plot(drift_vec_list, branch_slopes_da, 'Angle of drift ($^{\\circ}$ C)', 'Powerlaw Slope', 'Drift Angle: Slope of Branch Distribution')
+
+    # 4. Changes in the initial nutrient density
+    # if plot_nutrient_density:
+
+    #     final_time_steps_da = []
+    #     fdr_list_da = []
+    #     fdc_list_da = []
+    #     branch_slopes_da = []
+
+    #     for drift_vec in drift_vec_angles:
+    #         driftvec_filtered_a = sim_results[sim_results['drift_vec'].apply(lambda x: x[0] == drift_vec[0] and x[1] == drift_vec[1])]
+    #         growth_series_mean_da, fdr_da, fdc_da, slope_da = analyse_environmental_params(driftvec_filtered_a, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
+        
+    #         final_time_steps_da.append(growth_series_mean_da)
+    #         fdr_list_da.append(fdr_da)
+    #         fdc_list_da.append(fdc_da)
+    #         branch_slopes_da.append(slope_da)
+
+    #     drift_vec_list = []
+    #     for vec in drift_vec_norms:
+    #         drift_vec_list.append(np.linalg.norm(vec))
+
+    #     if growth:
+    #         # Plot Growth
+    #         env_param_plot(drift_vec_list, final_time_steps_da, 'Angle of drift ($^{\\circ}$ C)', f'Time steps needed to reach mass {target_mass_series[0]}', 'Drift Angle: Speed of Growth')
+    #     if fdr:
+    #         # Plot Fractal Dimension radius
+    #         env_param_plot(drift_vec_list, fdr_list_da, 'Angle of drift ($^{\\circ}$ C)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (radius)')
+    #     if fdc:
+    #         # Plot Fractal Dimension coarse grain
+    #         env_param_plot(drift_vec_list, fdc_list_da, 'Angle of drift ($^{\\circ}$ C)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (coarse graining)')
+    #     if branch:
+    #         # Plot Branching Slope
+    #         env_param_plot(drift_vec_list, branch_slopes_da, 'Angle of drift ($^{\\circ}$ C)', 'Powerlaw Slope', 'Drift Angle: Slope of Branch Distribution')
+
+        
 
 
 
