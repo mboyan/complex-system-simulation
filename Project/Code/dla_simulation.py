@@ -264,21 +264,31 @@ def convert_to_tuple(nested_list):
         nested_tuple (tuple) - a tuple with the same elements as nested_list, but with all lists converted to tuples
     """
     if nested_list is not None:
-        return tuple(convert_to_tuple(i) if isinstance(i, np.ndarray) else i for i in nested_list)
+        if isinstance(nested_list, (float, int, str)):
+            return nested_list
+        else:
+            return tuple(convert_to_tuple(i) if (isinstance(i, np.ndarray) or isinstance(i, list)) else i for i in nested_list)
     else:
         return None
 
 
-def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=True, plot_branch_distr=True, dla_evolutions=None):
+def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=True, plot_branch_distr=True, dla_evolutions=None, title_on=False):
     """
     Unpacks the results of a DLA simulation series, calculates statistics and plots the results.
     inputs:
         sim_results (pd.DataFrame) - a dataframe of simulation results
+        plot_mass (bool) - whether to plot the mass distribution for each parameter combination; defaults to True
+        plot_fdr (bool) - whether to plot the radius-based fractal dimension for each parameter combination; defaults to True
+        plot_fdc (bool) - whether to plot the coarse-graining-based fractal dimension for each parameter combination; defaults to True
+        plot_branch_distr (bool) - whether to plot the branch distribution for each parameter combination; defaults to True
         dla_evolutions (dict) - a dictionary of saved DLA evolutions in the form of n-D lattice series
             containing the aggregate states and particle positions over time; defaults to None
+        title_on (bool) - whether to display the parameter combination as the title of each plot; defaults to False
     """
 
     assert isinstance(sim_results, pd.DataFrame), 'sim_results must be a pandas DataFrame'
+
+    sim_results = sim_results.replace(np.nan, None)
 
     # Unpack simulation parameters
     lattice_size_series = sim_results['lattice_size'].unique()
@@ -294,21 +304,27 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
     param_combos = product(lattice_size_series, max_timesteps_series, seeds_series, particle_density_series, target_mass_series,
                            drift_vec_series, sun_vec_series, obstacle_box_series)
     
+    param_combos_list = list(param_combos)
     n_axes = int(plot_mass) + int(plot_fdr) + int(plot_fdc) + int(plot_branch_distr) + int(dla_evolutions is not None)
     
     # Iterate over parameter combinations
-    for i, combo in enumerate(param_combos):
+    for i, combo in enumerate(param_combos_list):
 
         # Set up plot
         if n_axes > 0:
-            fig, axs = plt.subplots(n_axes)
-            fig.set_size_inches(4, 3*n_axes)
+            fig, axs = plt.subplots(1, n_axes)
+            fig.set_size_inches(3*n_axes, 2.75)
             str_combo = str(combo).split(',')
             split_idx = int(len(str_combo)*0.5)
-            fig.suptitle(f"Simulation results for\n" + ','.join(str_combo[:split_idx])+ "\n" + ','.join(str_combo[split_idx:]), weight='bold')
+            if title_on:
+                fig.suptitle(f"Simulation results for\n" + ','.join(str_combo[:split_idx])+ "\n" + ','.join(str_combo[split_idx:]), weight='bold')
         
         # Get data subset for current parameter combination
         param_col = sim_results.columns[:8]
+        sim_results['seeds'] = sim_results['seeds'].apply(convert_to_tuple)
+        sim_results['drift_vec'] = sim_results['drift_vec'].apply(tuple)
+        sim_results['sun_vec'] = sim_results['sun_vec'].apply(tuple)
+        sim_results['obstacle_boxes'] = sim_results['obstacle_boxes'].apply(convert_to_tuple)
         data_subset = sim_results[sim_results[param_col].apply(lambda row: np.all([np.array_equal(row[col], val) for col, val in zip(param_col, combo)]), axis=1)]
 
         # Veriify that subset is not empty
@@ -338,7 +354,7 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             cluster_sample = dla_evolutions['lattice_frames'][sample_index][-1]
             vt.plot_lattice(cluster_sample, branches, ax=axs[ax_ct])
             ax_ct += 1
-
+        
         if plot_mass:
             # Trim mass series to the same length
             min_length = np.min([len(measures['mass_series']) for measures in sim_measures])
@@ -389,6 +405,7 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
         if plot_branch_distr:
             branch_lengths = [measures['branch_lengths_unique'] for measures in sim_measures]
             branch_length_counts = [measures['branch_length_counts'] for measures in sim_measures]
+            branches = [measures['branches'] for measures in sim_measures]
 
             # Get final mass of each simulation
             max_mass = [measures['mass_series'][-1] for measures in sim_measures]
@@ -399,8 +416,9 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             # branch_length_props_flat = np.array([prop for bl in branch_length_props for prop in bl])
             
             # Flatten lists
-            branch_lengths_flat = np.array([length for bl in branch_lengths for length in bl])
-            branch_length_ct_flat = np.array([count for bl in branch_length_counts for count in bl])
+            branch_lengths_flat = np.array([length for b in branch_lengths for length in b])
+            branch_length_ct_flat = np.array([count for b in branch_length_counts for count in b])
+            branches_flat = np.array([branch for b in branches for branch in b])
             # branch_length_prop_flat = np.array([count / max_mass[i] for i in range(len(branch_length_counts)) for count in branch_length_counts[i]])
 
             # Take the average branch length counts over simulations
@@ -409,14 +427,15 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             # branch_length_prop_mean = np.array([np.mean(branch_length_prop_flat[np.argwhere(branch_lengths_flat == length)]) for length in branch_lengths_unique])
 
             # Plot branch distribution
-            vt.plot_branch_length_distribution(branch_lengths_unique, branch_length_ct_mean, ax=axs[ax_ct])
+            vt.plot_branch_length_distribution(branch_lengths_unique, branch_length_ct_mean, branches=branches_flat, ax=axs[ax_ct])
 
             # Verify power law
-            csm.verify_power_law(branch_length_ct_mean, ax=axs[ax_ct])
+            # csm.verify_power_law(branch_length_ct_mean, ax=axs[ax_ct])
             ax_ct += 1
 
         plt.tight_layout()
         plt.show()
+
 
 def analyse_environmental_params(sim_results_param, growth = False, fdr=False, fdc=False, branch=False):
     """
