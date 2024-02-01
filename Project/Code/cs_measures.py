@@ -153,6 +153,10 @@ def branch_distribution(lattice_array, seed_coords, moore=False, verify_plaw=Fal
                     # Add an edge from the current cell to the neighbor
                     G.add_edge(index, neighbour)
 
+    # Plot the graph with coordinates
+    # pos = {node: node for node in G.nodes()}
+    # nx.draw(G, pos=pos, node_size=1, node_color='k', edge_color='k', width=0.5)
+
     # Trace all paths to seed
     paths = [nx.shortest_path(G, node, seed_coords) for node, degree in G.degree()]
 
