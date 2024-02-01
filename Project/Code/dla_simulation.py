@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from itertools import product, tee
+import math
+import scipy.stats as stat
 
 import dla_model as dm
 import cs_measures as csm
@@ -445,6 +447,7 @@ def analyse_environmental_params(sim_results_param, growth = False, fdr=False, f
     if growth:
         growth_series = np.array([len(measures['mass_series']) for measures in sim_results_param['sim_measures']])
         growth_series_mean = np.mean(growth_series)
+        growth_series_ci = stat.t.interval(0.95, len(growth_series) - 1, growth_series_mean, stat.sem(growth_series))
 
     # 2. Fractal Dimension with Radius
     if fdr:
@@ -485,7 +488,7 @@ def analyse_environmental_params(sim_results_param, growth = False, fdr=False, f
         branch_length_ct_mean = np.array([np.mean(branch_length_ct_flat[np.argwhere(branch_lengths_flat == length)]) for length in branch_lengths_unique])
         slope = pl.Fit(branch_length_ct_mean).power_law.alpha
 
-    return growth_series_mean, fdr, fdc, slope
+    return growth_series_mean, growth_series_ci, fdr, fdc, slope
 
 
 def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = False, plot_drift_angle = False, plot_nutrient_density = False, growth = False, fdr=False, fdc=False, branch=False):
@@ -504,12 +507,12 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
     assert isinstance(sim_results, pd.DataFrame), 'sim_results must be a pandas DataFrame'
 
     # Unpack simulation parameters
-    lattice_size_series = sim_results['lattice_size'].unique()
-    max_timesteps_series = sim_results['max_timesteps'].unique()
-    seeds_series = sim_results['seeds'].apply(convert_to_tuple).unique()
-    particle_density_series = sim_results['particle_density'].unique()
+    # lattice_size_series = sim_results['lattice_size'].unique()
+    # max_timesteps_series = sim_results['max_timesteps'].unique()
+    # seeds_series = sim_results['seeds'].apply(convert_to_tuple).unique()
+    # particle_density_series = sim_results['particle_density'].unique()
     target_mass_series = sim_results['target_mass'].unique()
-    obstacle_box_series = sim_results['obstacle_boxes'].apply(convert_to_tuple).unique()
+    # obstacle_box_series = sim_results['obstacle_boxes'].apply(convert_to_tuple).unique()
     drift_vec_series = sim_results['drift_vec'].apply(tuple).unique()
     sun_vec_series = sim_results['sun_vec'].apply(tuple).unique()
 
@@ -581,38 +584,49 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
 
     # 3. Changes in the angle of the drift vector
     if plot_drift_angle:
-        drift_vec_angles = drift_vec_series[5:]
+        # drift_vec_angles = drift_vec_series[5:]
 
         final_time_steps_da = []
+        ci_final_time_steps_da = []
         fdr_list_da = []
         fdc_list_da = []
         branch_slopes_da = []
 
-        for drift_vec in drift_vec_angles:
+        for drift_vec in drift_vec_series:
+            # print(list(drift_vec))
+            # print(sim_results['drift_vec'])
+            # mask = sim_results['drift_vec'] == list(drift_vec)
+            # # print(mask)
+            # driftvec_filtered_a = sim_results[mask]
+            # print(driftvec_filtered_a)
             driftvec_filtered_a = sim_results[sim_results['drift_vec'].apply(lambda x: x[0] == drift_vec[0] and x[1] == drift_vec[1])]
-            growth_series_mean_da, fdr_da, fdc_da, slope_da = analyse_environmental_params(driftvec_filtered_a, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
+            growth_series_mean_da, growth_series_ci_da, fdr_da, fdc_da, slope_da = analyse_environmental_params(driftvec_filtered_a, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
         
             final_time_steps_da.append(growth_series_mean_da)
+            ci_final_time_steps_da.append(growth_series_ci_da)
             fdr_list_da.append(fdr_da)
             fdc_list_da.append(fdc_da)
             branch_slopes_da.append(slope_da)
 
-        drift_vec_list = []
-        for vec in drift_vec_norms:
-            drift_vec_list.append(np.linalg.norm(vec))
+        drift_angle_list = []
+        for vec in drift_vec_series:
+            drift_angle_list.append(math.degrees(math.atan(vec[1]/vec[0])))
 
         if growth:
             # Plot Growth
-            env_param_plot(drift_vec_list, final_time_steps_da, 'Angle of drift ($^{\\circ}$ C)', f'Time steps needed to reach mass {target_mass_series[0]}', 'Drift Angle: Speed of Growth')
+            lower_ci = [interval[0] for interval in ci_final_time_steps_da]
+            upper_ci = [interval[1] for interval in ci_final_time_steps_da]
+            plt.fill_between(drift_angle_list, lower_ci, upper_ci, alpha = 0.5)
+            env_param_plot(drift_angle_list, final_time_steps_da, 'Angle of drift (degrees)', f'Time steps needed to reach mass {target_mass_series[0]}', 'Drift Angle: Speed of Growth')
         if fdr:
             # Plot Fractal Dimension radius
-            env_param_plot(drift_vec_list, fdr_list_da, 'Angle of drift ($^{\\circ}$ C)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (radius)')
+            env_param_plot(drift_angle_list, fdr_list_da, 'Angle of drift (degrees)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (radius)')
         if fdc:
             # Plot Fractal Dimension coarse grain
-            env_param_plot(drift_vec_list, fdc_list_da, 'Angle of drift ($^{\\circ}$ C)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (coarse graining)')
+            env_param_plot(drift_angle_list, fdc_list_da, 'Angle of drift (degrees)', 'Fractal Dimension', 'Drift Angle: Fractal Dimension (coarse graining)')
         if branch:
             # Plot Branching Slope
-            env_param_plot(drift_vec_list, branch_slopes_da, 'Angle of drift ($^{\\circ}$ C)', 'Powerlaw Slope', 'Drift Angle: Slope of Branch Distribution')
+            env_param_plot(drift_angle_list, branch_slopes_da, 'Angle of drift (degrees)', 'Powerlaw Slope', 'Drift Angle: Slope of Branch Distribution')
 
     # 4. Changes in the initial nutrient density
     # if plot_nutrient_density:
@@ -648,7 +662,6 @@ def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = Fal
     #         # Plot Branching Slope
     #         env_param_plot(drift_vec_list, branch_slopes_da, 'Angle of drift ($^{\\circ}$ C)', 'Powerlaw Slope', 'Drift Angle: Slope of Branch Distribution')
 
-        
 
 
 
