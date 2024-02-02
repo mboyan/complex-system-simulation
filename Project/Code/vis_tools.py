@@ -59,7 +59,7 @@ def plot_lattice_3D(lattice, cmap='tab20b', ax=None, title=None):
     assert np.ndim(lattice) == 3, 'input array must have 3 dimensions'
 
     if ax is None:
-        fig, ax = plt.subplots(projection='3d')
+        fig, ax = plt.subplots(subplot_kw={'projection':'3d'})
     else:
         fig = ax.get_figure()
 
