@@ -208,7 +208,7 @@ def linreg_fdim(scale_series, n_box_series):
     return coeffs
 
 
-def verify_power_law(data, ax=None):
+def verify_power_law(data):
     """
     Verifies whether a dataset follows a power law distribution by fitting a power law function
     and comparing it to an exponential one.
@@ -222,29 +222,5 @@ def verify_power_law(data, ax=None):
     loglikelihood, p_value = powerlaw_results.loglikelihood_ratio('power_law', 'exponential')
     plaw_verification = f'Plaw-vs-exp-likelihood:\n{loglikelihood:.4f}, p = {p_value:.4f}'
     alpha = powerlaw_results.power_law.alpha
-    
-    # Plot the power law fit
-    if ax is not None:
-        
-        xmin = powerlaw_results.power_law.xmin
-
-        # Get all the data points for which the power law holds
-        plaw_data = np.array(data)[data >= xmin]
-
-        # Calculate the normalization constant C
-        # avg = np.mean(plaw_data)
-        # C = (alpha - 1) * (avg ** alpha - 1)
-
-        # Compute the log-transformed PDF
-        data_sorted = np.sort(data)
-        log_x = np.log(data_sorted)
-        # log_pdf = np.log(C) - alpha * log_x
-        log_pdf = - alpha * log_x
-        pdf = np.exp(log_pdf)
-
-        # Plot the log-transformed PDF
-        # ax.plot(data_sorted, pdf * np.sum(plaw_data), color='r', linestyle='--', label=plaw_verification)
-        # ax.set_ylim(0.75, np.max(data) * 2)
-        # ax.legend(fontsize='small')
         
     return loglikelihood, p_value, alpha, plaw_verification

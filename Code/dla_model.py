@@ -4,7 +4,6 @@ This module contains functions for a single simulation instance of a Diffusion-L
 
 import numpy as np
 from itertools import product
-import matplotlib.pyplot as plt
 
 
 # ===== Particle / lattice initialization =====
@@ -354,18 +353,6 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
         indices_nbr = np.zeros(nbr_vals.shape, dtype=int)
         take_axis = np.take_along_axis(nbrs_sorted, indices_nbr, axis=-1)
         nbr_select = take_axis[...,0].astype(int)
-        
-        # reshape to get arrays of all possible neighbors for each point
-        # reshaped_sl = shifted_lattices.reshape(shifted_lattices.shape[0], -1).astype(int)
-    
-        # # count most occurring neighbor
-        # nbr_counts = np.apply_along_axis(lambda x: np.bincount(x, minlength = int(shifted_lattices.max()+ 1)), axis = 0, arr = reshaped_sl)
-
-        # # set count for zero to 0.5 (highest if it only zeros (no neighbors), lower when there is at least one neighbor)
-        # nbr_counts[0] = 0.5
-
-        # # find most occurring neighbor
-        # most_occurring_nbrs = nbr_counts.argmax(axis = 0).reshape((lattice_size, lattice_size)) # picks the lowest value when equal amount of neighbors
 
     # Calculate weights for each attachment direction based on dot product with sun vector
     if sun_vec is not None:
@@ -392,8 +379,6 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     # Update lattice
     if multi_seed:
         lattice[tuple(particles[new_seed_indices].T)] = nbr_select[tuple(particles[new_seed_indices].T)]
-        # lattice[tuple(particles[new_seed_indices].T)] = most_occurring_nbrs[tuple(particles[new_seed_indices].T)]
-        # lattice[tuple(particles[new_seed_indices].T)] = shifted_lattices[np.random]
     else:
         lattice[tuple(particles[new_seed_indices].T)] = 1
 

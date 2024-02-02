@@ -297,34 +297,10 @@ def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts,
     if branches is not None:
         branch_lengths = [len(branch) for branch in branches]
         _, _, alpha, plaw_verification = csm.verify_power_law(branch_lengths, ax=ax)
-
-        # alpha = 1/alpha
         
-        # Calculate the normalization constant C
-        # avg = np.mean(plaw_data)
-        # C = np.sqrt(2*alpha)
         C = branch_length_counts[2]/(branch_lengths_unique[2]**(-alpha))
         xs = branch_lengths_unique
         ys = C*xs**(-alpha)
-
-        # Compute the log-transformed PDF
-        # branch_lengths_sorted = np.nonzero(np.sort(branch_lengths))
-        # branch_lengths_sorted = np.unique(branch_lengths_sorted)
-        # log_x = np.log(branch_lengths_sorted)
-        # log_pdf = np.log(C) - alpha * log_x
-        # pdf = np.exp(log_pdf)
-
-        # log_x = np.log(branch_lengths_unique)
-        # log_y = np.log(branch_length_counts)
-        # coeffs = np.polyfit(log_x, log_y, 1)
-
-        # log_fit = coeffs[0] * log_x + coeffs[1]
-        # y_fit = np.exp(log_fit)
-        # sort_indices = np.argsort(branch_lengths_unique)
-
-        # ax.loglog(branch_lengths_unique[sort_indices], y_fit[sort_indices], linestyle='--', color='orange', label=f'regression ($D={coeffs[0]:.5f}$)')
-
-        # ax.loglog(branch_lengths_sorted, pdf * np.sum(branch_lengths_sorted), color='r', linestyle='--')
 
         label = f'alpha={alpha:.5f}\n' + plaw_verification
         ax.loglog(xs, ys, color='r', linestyle='--', label=label)

@@ -5,7 +5,7 @@ This module contains functions for setting up and running series of DLA simulati
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from itertools import product, tee
+from itertools import product
 import math
 import scipy.stats as stat
 
@@ -413,26 +413,17 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             max_mass = [measures['mass_series'][-1] for measures in sim_measures]
             assert max_mass is not None, 'mass cannot be None for branch distribution calculation'
             
-            # Normalize branch length counts
-            # branch_length_props = [np.array([count / max_mass[i] for count in branch_length_counts[i]]) for i in range(len(branch_length_counts))]
-            # branch_length_props_flat = np.array([prop for bl in branch_length_props for prop in bl])
-            
             # Flatten lists
             branch_lengths_flat = np.array([length for b in branch_lengths for length in b])
             branch_length_ct_flat = np.array([count for b in branch_length_counts for count in b])
             branches_flat = np.array([branch for b in branches for branch in b])
-            # branch_length_prop_flat = np.array([count / max_mass[i] for i in range(len(branch_length_counts)) for count in branch_length_counts[i]])
 
             # Take the average branch length counts over simulations
             branch_lengths_unique = np.unique(branch_lengths_flat)
             branch_length_ct_mean = np.array([np.mean(branch_length_ct_flat[np.argwhere(branch_lengths_flat == length)]) for length in branch_lengths_unique])
-            # branch_length_prop_mean = np.array([np.mean(branch_length_prop_flat[np.argwhere(branch_lengths_flat == length)]) for length in branch_lengths_unique])
 
             # Plot branch distribution
             vt.plot_branch_length_distribution(branch_lengths_unique, branch_length_ct_mean, branches=branches_flat, ax=axs[ax_ct])
-
-            # Verify power law
-            # csm.verify_power_law(branch_length_ct_mean, ax=axs[ax_ct])
             ax_ct += 1
 
         plt.tight_layout()
