@@ -4,6 +4,7 @@ This module contains functions for a single simulation instance of a Diffusion-L
 
 import numpy as np
 from itertools import product
+import matplotlib.pyplot as plt
 
 
 # ===== Particle / lattice initialization =====
@@ -344,17 +345,27 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     shifted_lattices = np.array([np.roll(padded_lattice, shift, tuple(range(lattice_dims)))[(slice(1, -1),)*lattice_dims] for shift in nbrs])
     
     if multi_seed:
+
+        nbr_vals = np.moveaxis(shifted_lattices, 0, -1)
+        nbr_vals = np.where(nbr_vals == 0, 999999, nbr_vals)
+        
+        # Sort descending
+        nbrs_sorted = np.sort(nbr_vals, axis=-1)
+        indices_nbr = np.zeros(nbr_vals.shape, dtype=int)
+        take_axis = np.take_along_axis(nbrs_sorted, indices_nbr, axis=-1)
+        nbr_select = take_axis[...,0].astype(int)
+        
         # reshape to get arrays of all possible neighbors for each point
-        reshaped_sl = shifted_lattices.reshape(shifted_lattices.shape[0], -1).astype(int)
+        # reshaped_sl = shifted_lattices.reshape(shifted_lattices.shape[0], -1).astype(int)
     
-        # count most occurring neighbor
-        nbr_counts = np.apply_along_axis(lambda x: np.bincount(x, minlength = int(shifted_lattices.max()+ 1)), axis = 0, arr = reshaped_sl)
+        # # count most occurring neighbor
+        # nbr_counts = np.apply_along_axis(lambda x: np.bincount(x, minlength = int(shifted_lattices.max()+ 1)), axis = 0, arr = reshaped_sl)
 
-        # set count for zero to 0.5 (highest if it only zeros (no neighbors), lower when there is at least one neighbor)
-        nbr_counts[0] = 0.5
+        # # set count for zero to 0.5 (highest if it only zeros (no neighbors), lower when there is at least one neighbor)
+        # nbr_counts[0] = 0.5
 
-        # find most occurring neighbor
-        most_occurring_nbrs = nbr_counts.argmax(axis = 0).reshape((lattice_size, lattice_size)) # picks the lowest value when equal amount of neighbors
+        # # find most occurring neighbor
+        # most_occurring_nbrs = nbr_counts.argmax(axis = 0).reshape((lattice_size, lattice_size)) # picks the lowest value when equal amount of neighbors
 
     # Calculate weights for each attachment direction based on dot product with sun vector
     if sun_vec is not None:
@@ -370,8 +381,9 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
     # Multiply shifted lattices by weights
     weights = np.repeat(weights, lattice_size ** lattice_dims)
     weights = np.reshape(weights, shifted_lattices.shape)
-    shifted_lattices *= weights
-    summed_nbrs_lattice = np.sum(shifted_lattices, axis=0)
+    occupied_flags = np.where(shifted_lattices > 0, 1.0, 0.0)
+    occupied_flags *= weights
+    summed_nbrs_lattice = np.sum(occupied_flags, axis=0)
 
     # Check if particles are neighbouring seeds
     u = np.random.uniform()
@@ -379,7 +391,9 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
 
     # Update lattice
     if multi_seed:
-        lattice[tuple(particles[new_seed_indices].T)] = most_occurring_nbrs[tuple(particles[new_seed_indices].T)]
+        lattice[tuple(particles[new_seed_indices].T)] = nbr_select[tuple(particles[new_seed_indices].T)]
+        # lattice[tuple(particles[new_seed_indices].T)] = most_occurring_nbrs[tuple(particles[new_seed_indices].T)]
+        # lattice[tuple(particles[new_seed_indices].T)] = shifted_lattices[np.random]
     else:
         lattice[tuple(particles[new_seed_indices].T)] = 1
 

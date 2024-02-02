@@ -11,7 +11,7 @@ from IPython.display import HTML
 
 import cs_measures as csm
 
-def plot_lattice_2D(lattice, cmap='tab20b', ax=None, title=None):
+def plot_lattice_2D(lattice, cmap='tab20b', ax=None, title=None, cell_size=1):
     """
     Plots a 2D lattice
     inputs:
@@ -25,7 +25,7 @@ def plot_lattice_2D(lattice, cmap='tab20b', ax=None, title=None):
 
     if ax is None:
         fig, ax = plt.subplots()
-        fig.set_size_inches(lattice.shape[0]*0.05, lattice.shape[1]*0.05)
+        fig.set_size_inches(lattice.shape[0]*0.05*cell_size, lattice.shape[1]*0.05*cell_size)
     else:
         fig = ax.get_figure()
     
@@ -38,9 +38,9 @@ def plot_lattice_2D(lattice, cmap='tab20b', ax=None, title=None):
     ax.set_ylabel("y")
 
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize='small')
     else:
-        ax.set_title("DLA cluster")
+        ax.set_title("DLA cluster", fontsize='small')
 
     if ax is None:
         plt.show()
@@ -81,15 +81,15 @@ def plot_lattice_3D(lattice, cmap='tab20b', ax=None, title=None):
     ax.set_zlabel("z")
 
     if title is not None:
-        ax.set_title(title)
+        ax.set_title(title, fontsize='small')
     else:
-        ax.set_title("DLA cluster")
+        ax.set_title("DLA cluster", fontsize='small')
 
     if ax is None:
         plt.show()
 
 
-def plot_lattice(lattice, branches=None, ax=None, title=None):
+def plot_lattice(lattice, branches=None, ax=None, title=None, cell_size=1):
     """
     Check lattice data and dispatch to either 2D or 3D plot function.
     inputs:
@@ -102,7 +102,7 @@ def plot_lattice(lattice, branches=None, ax=None, title=None):
     assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
 
     if branches is None:
-        branch_lattice = np.array(lattice)
+        branch_lattice = np.array(lattice, dtype=np.float64)
         cmap = 'tab20b'
     else:
         # Assign colours based on branches
@@ -113,7 +113,7 @@ def plot_lattice(lattice, branches=None, ax=None, title=None):
         cmap = 'prism'
     
     if np.ndim(lattice) == 2:
-        plot_lattice_2D(branch_lattice, cmap, ax, title)
+        plot_lattice_2D(branch_lattice, cmap, ax, title, cell_size)
     elif np.ndim(lattice) == 3:
         plot_lattice_3D(branch_lattice, cmap, ax, title)
     else:
@@ -256,9 +256,9 @@ def plot_fractal_dimension(scale_series, n_box_series, coeffs, ax=None, title=No
     ax.legend(fontsize='small')
 
     if title is None:
-        ax.set_title("Lattice scaling factor (s) vs\nnumber of occupied lattice sites (N)")
+        ax.set_title("Lattice scaling factor (s) vs\nnumber of occupied lattice sites (N)", fontsize='small')
     else:
-        ax.set_title(title)
+        ax.set_title(title, fontsize='small')
 
     if ax is None:
         plt.show()
@@ -290,38 +290,45 @@ def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts,
     ax.legend()
 
     if title is None:
-        ax.set_title("Distribution of branch lengths in a DLA cluster")
+        ax.set_title("Distribution of branch lengths in a DLA cluster", fontsize='small')
     else:
-        ax.set_title(title)
+        ax.set_title(title, fontsize='small')
 
     if branches is not None:
         branch_lengths = [len(branch) for branch in branches]
-        _, _, alpha = csm.verify_power_law(branch_lengths, ax=ax)
+        _, _, alpha, plaw_verification = csm.verify_power_law(branch_lengths, ax=ax)
+
+        # alpha = 1/alpha
         
         # Calculate the normalization constant C
         # avg = np.mean(plaw_data)
-        C = np.sqrt(2*alpha)
+        # C = np.sqrt(2*alpha)
+        C = branch_length_counts[2]/(branch_lengths_unique[2]**(-alpha))
+        xs = branch_lengths_unique
+        ys = C*xs**(-alpha)
 
         # Compute the log-transformed PDF
-        branch_lengths_sorted = np.sort(branch_lengths)
-        branch_lengths_sorted = np.unique(branch_lengths_sorted)
-        log_x = np.log(branch_lengths_sorted)
-        log_pdf = np.log(C) - alpha * log_x
-        # log_pdf = - alpha * log_x
-        pdf = np.exp(log_pdf)
+        # branch_lengths_sorted = np.nonzero(np.sort(branch_lengths))
+        # branch_lengths_sorted = np.unique(branch_lengths_sorted)
+        # log_x = np.log(branch_lengths_sorted)
+        # log_pdf = np.log(C) - alpha * log_x
+        # pdf = np.exp(log_pdf)
 
-        log_x = np.log(branch_lengths_unique)
-        log_y = np.log(branch_length_counts)
-        coeffs = np.polyfit(log_x, log_y, 1)
+        # log_x = np.log(branch_lengths_unique)
+        # log_y = np.log(branch_length_counts)
+        # coeffs = np.polyfit(log_x, log_y, 1)
 
-        log_fit = coeffs[0] * log_x + coeffs[1]
-        y_fit = np.exp(log_fit)
-        sort_indices = np.argsort(branch_lengths_unique)
+        # log_fit = coeffs[0] * log_x + coeffs[1]
+        # y_fit = np.exp(log_fit)
+        # sort_indices = np.argsort(branch_lengths_unique)
 
-        ax.loglog(branch_lengths_unique[sort_indices], y_fit[sort_indices], linestyle='--', color='orange', label=f'regression ($D={coeffs[0]:.5f}$)')
+        # ax.loglog(branch_lengths_unique[sort_indices], y_fit[sort_indices], linestyle='--', color='orange', label=f'regression ($D={coeffs[0]:.5f}$)')
 
-        ax.plot(branch_lengths_sorted, pdf * np.sum(branch_lengths_sorted), color='r', linestyle='--')
-        ax.set_ylim(0.75, np.max(branch_lengths_sorted) * 2)
+        # ax.loglog(branch_lengths_sorted, pdf * np.sum(branch_lengths_sorted), color='r', linestyle='--')
+
+        label = f'alpha={alpha:.5f}\n' + plaw_verification
+        ax.loglog(xs, ys, color='r', linestyle='--', label=label)
+        ax.set_ylim(0.75, np.max(branch_lengths) * 2)
         ax.legend(fontsize='small')
 
     if ax is None:
@@ -348,7 +355,7 @@ def plot_mass_over_time(mass_series, ax=None, title=None):
     ax.set_ylabel("Mass")
 
     if title is None:
-        ax.set_title("Mass of a DLA cluster over time")
+        ax.set_title("Mass of a DLA cluster over time", fontsize='small')
     else:
         ax.set_title(title)
 

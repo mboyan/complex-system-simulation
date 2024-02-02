@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from itertools import product, tee
+import math
+import scipy.stats as stat
 
 import dla_model as dm
 import cs_measures as csm
@@ -264,21 +266,31 @@ def convert_to_tuple(nested_list):
         nested_tuple (tuple) - a tuple with the same elements as nested_list, but with all lists converted to tuples
     """
     if nested_list is not None:
-        return tuple(convert_to_tuple(i) if isinstance(i, np.ndarray) else i for i in nested_list)
+        if isinstance(nested_list, (float, int, str)):
+            return nested_list
+        else:
+            return tuple(convert_to_tuple(i) if (isinstance(i, np.ndarray) or isinstance(i, list)) else i for i in nested_list)
     else:
         return None
 
 
-def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=True, plot_branch_distr=True, dla_evolutions=None):
+def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=True, plot_branch_distr=True, dla_evolutions=None, title_on=False):
     """
     Unpacks the results of a DLA simulation series, calculates statistics and plots the results.
     inputs:
         sim_results (pd.DataFrame) - a dataframe of simulation results
+        plot_mass (bool) - whether to plot the mass distribution for each parameter combination; defaults to True
+        plot_fdr (bool) - whether to plot the radius-based fractal dimension for each parameter combination; defaults to True
+        plot_fdc (bool) - whether to plot the coarse-graining-based fractal dimension for each parameter combination; defaults to True
+        plot_branch_distr (bool) - whether to plot the branch distribution for each parameter combination; defaults to True
         dla_evolutions (dict) - a dictionary of saved DLA evolutions in the form of n-D lattice series
             containing the aggregate states and particle positions over time; defaults to None
+        title_on (bool) - whether to display the parameter combination as the title of each plot; defaults to False
     """
 
     assert isinstance(sim_results, pd.DataFrame), 'sim_results must be a pandas DataFrame'
+
+    sim_results = sim_results.replace(np.nan, None)
 
     # Unpack simulation parameters
     lattice_size_series = sim_results['lattice_size'].unique()
@@ -294,21 +306,27 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
     param_combos = product(lattice_size_series, max_timesteps_series, seeds_series, particle_density_series, target_mass_series,
                            drift_vec_series, sun_vec_series, obstacle_box_series)
     
+    param_combos_list = list(param_combos)
     n_axes = int(plot_mass) + int(plot_fdr) + int(plot_fdc) + int(plot_branch_distr) + int(dla_evolutions is not None)
     
     # Iterate over parameter combinations
-    for i, combo in enumerate(param_combos):
+    for i, combo in enumerate(param_combos_list):
 
         # Set up plot
         if n_axes > 0:
-            fig, axs = plt.subplots(n_axes)
-            fig.set_size_inches(4, 3*n_axes)
+            fig, axs = plt.subplots(1, n_axes)
+            fig.set_size_inches(3*n_axes, 2.75)
             str_combo = str(combo).split(',')
             split_idx = int(len(str_combo)*0.5)
-            fig.suptitle(f"Simulation results for\n" + ','.join(str_combo[:split_idx])+ "\n" + ','.join(str_combo[split_idx:]), weight='bold')
+            if title_on:
+                fig.suptitle(f"Simulation results for\n" + ','.join(str_combo[:split_idx])+ "\n" + ','.join(str_combo[split_idx:]), weight='bold')
         
         # Get data subset for current parameter combination
         param_col = sim_results.columns[:8]
+        sim_results['seeds'] = sim_results['seeds'].apply(convert_to_tuple)
+        sim_results['drift_vec'] = sim_results['drift_vec'].apply(tuple)
+        sim_results['sun_vec'] = sim_results['sun_vec'].apply(tuple)
+        sim_results['obstacle_boxes'] = sim_results['obstacle_boxes'].apply(convert_to_tuple)
         data_subset = sim_results[sim_results[param_col].apply(lambda row: np.all([np.array_equal(row[col], val) for col, val in zip(param_col, combo)]), axis=1)]
 
         # Veriify that subset is not empty
@@ -338,7 +356,7 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             cluster_sample = dla_evolutions['lattice_frames'][sample_index][-1]
             vt.plot_lattice(cluster_sample, branches, ax=axs[ax_ct])
             ax_ct += 1
-
+        
         if plot_mass:
             # Trim mass series to the same length
             min_length = np.min([len(measures['mass_series']) for measures in sim_measures])
@@ -389,6 +407,7 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
         if plot_branch_distr:
             branch_lengths = [measures['branch_lengths_unique'] for measures in sim_measures]
             branch_length_counts = [measures['branch_length_counts'] for measures in sim_measures]
+            branches = [measures['branches'] for measures in sim_measures]
 
             # Get final mass of each simulation
             max_mass = [measures['mass_series'][-1] for measures in sim_measures]
@@ -399,8 +418,9 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             # branch_length_props_flat = np.array([prop for bl in branch_length_props for prop in bl])
             
             # Flatten lists
-            branch_lengths_flat = np.array([length for bl in branch_lengths for length in bl])
-            branch_length_ct_flat = np.array([count for bl in branch_length_counts for count in bl])
+            branch_lengths_flat = np.array([length for b in branch_lengths for length in b])
+            branch_length_ct_flat = np.array([count for b in branch_length_counts for count in b])
+            branches_flat = np.array([branch for b in branches for branch in b])
             # branch_length_prop_flat = np.array([count / max_mass[i] for i in range(len(branch_length_counts)) for count in branch_length_counts[i]])
 
             # Take the average branch length counts over simulations
@@ -409,22 +429,46 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             # branch_length_prop_mean = np.array([np.mean(branch_length_prop_flat[np.argwhere(branch_lengths_flat == length)]) for length in branch_lengths_unique])
 
             # Plot branch distribution
-            vt.plot_branch_length_distribution(branch_lengths_unique, branch_length_ct_mean, ax=axs[ax_ct])
+            vt.plot_branch_length_distribution(branch_lengths_unique, branch_length_ct_mean, branches=branches_flat, ax=axs[ax_ct])
 
             # Verify power law
-            csm.verify_power_law(branch_length_ct_mean, ax=axs[ax_ct])
+            # csm.verify_power_law(branch_length_ct_mean, ax=axs[ax_ct])
             ax_ct += 1
 
         plt.tight_layout()
         plt.show()
 
+
 def analyse_environmental_params(sim_results_param, growth = False, fdr=False, fdc=False, branch=False):
     """
+    Analyzes the structural features and 'coralness' of the corals for one value of a changed parameter.
+    Four things are analyzed:
+    1. Speed of growth, determined by the amount of time steps it takes to get to the target mass.
+    2. Fractal Dimension, using the radius to determine the scale.
+    3. Fractal Dimension, using coarse graining to determine the scale.
+    4. Slope of powerlaw found for the length of the DLA branches.
+
+    input:
+        - sim_results_param (np.array): the results of multiple runs of the simulation for the specific value of 
+            a parameter.
+        - growth (Boolean): whether the speed of growth (1) is given as output.
+        - fdr (Boolean): whether the fractal dimension using radius scale (2) is given as output.
+        - fdc (Boolean): whether the fractal dimension using coarse graining scale (3) is given as output.
+        - branch (Boolean): whether the slope the power law fitted to the branch sizes (4) is given as output.
+    
+    output:
+        - growth_series_mean (float): the average amount of time steps before the target mass is reached.
+        - fdr (float): fractal dimension determined with radius scale 
+        - fdc (float): fractal dimension determined with coarse-graining scale
+        - slope (float): slope of the power law fitted to the branch sizes
     """
+    # 1. Speed of growth (time steps needed to reach target mass)
     if growth:
         growth_series = np.array([len(measures['mass_series']) for measures in sim_results_param['sim_measures']])
         growth_series_mean = np.mean(growth_series)
+        growth_series_ci = stat.t.interval(0.95, len(growth_series) - 1, growth_series_mean, stat.sem(growth_series))
 
+    # 2. Fractal Dimension with Radius
     if fdr:
         # Trim series to the same length
         min_length = np.min([len(measures['fdr_scale_series']) for measures in sim_results_param['sim_measures']])
@@ -434,14 +478,18 @@ def analyse_environmental_params(sim_results_param, growth = False, fdr=False, f
         scale_series_trimmed = scale_series_trimmed.flatten()
         n_box_series_trimmed = n_box_series_trimmed.flatten()
 
-        # Perform linear regression on results; returns [slope, intersect]
+        # Perform linear regression on results; use the slope
         fdr = csm.linreg_fdim(scale_series_trimmed, n_box_series_trimmed)[0]
 
+    # 3. Fractal Dimension with Coarse Graining
     if fdc:
         scale_series = np.array([measures['fdc_scale_series'] for measures in sim_results_param['sim_measures']]).flatten()
         n_box_series = np.array([measures['fdc_n_box_series'] for measures in sim_results_param['sim_measures']]).flatten()
+        
+        # Perform linear regression; use the slope
         fdc = csm.linreg_fdim(scale_series, n_box_series)[0]
 
+    # 4. Branch length distribution fitted with a power law
     if branch:
         branch_lengths = [measures['branch_lengths_unique'] for measures in sim_results_param['sim_measures']]
         branch_length_counts = [measures['branch_length_counts'] for measures in sim_results_param['sim_measures']]
@@ -459,96 +507,95 @@ def analyse_environmental_params(sim_results_param, growth = False, fdr=False, f
         branch_length_ct_mean = np.array([np.mean(branch_length_ct_flat[np.argwhere(branch_lengths_flat == length)]) for length in branch_lengths_unique])
         slope = pl.Fit(branch_length_ct_mean).power_law.alpha
 
-        return growth_series_mean, fdr, fdc, slope
+    return growth_series_mean, growth_series_ci, fdr, fdc, slope
 
-
-def plot_environmental_params(sim_results, plot_sun=False, plot_drift_norm = False, growth = False, fdr=False, fdc=False, branch=False):
+def plot_environmental_results(param, sim_results, drift_vec_angle = False, growth = True, fd = True, branch = True):
     """
-    Unpacks the results of a DLA simulation series, calculates statistics and plots the results.
-    """
-    assert isinstance(sim_results, pd.DataFrame), 'sim_results must be a pandas DataFrame'
-
-    # Unpack simulation parameters
-    lattice_size_series = sim_results['lattice_size'].unique()
-    max_timesteps_series = sim_results['max_timesteps'].unique()
-    seeds_series = sim_results['seeds'].apply(convert_to_tuple).unique()
-    particle_density_series = sim_results['particle_density'].unique()
-    target_mass_series = sim_results['target_mass'].unique()
-    obstacle_box_series = sim_results['obstacle_boxes'].apply(convert_to_tuple).unique()
-    drift_vec_series = sim_results['drift_vec'].apply(tuple).unique()
-    sun_vec_series = sim_results['sun_vec'].apply(tuple).unique()
-
-    if plot_sun:
-        final_time_steps_sv = []
-        fdr_list_sv = []
-        fdc_list_sv = []
-        branch_slopes_sv = []
-        for sun_vec in sun_vec_series:
-            sunvec_filtered = sim_results[sim_results['sun_vec'].apply(lambda x: x[1] == sun_vec[1])]
-            growth_series_mean_sv, fdr_sv, fdc_sv, slope_sv = analyse_environmental_params(sunvec_filtered, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
-        
-            final_time_steps_sv.append(growth_series_mean_sv)
-            fdr_list_sv.append(fdr_sv)
-            fdc_list_sv.append(fdc_sv)
-            branch_slopes_sv.append(slope_sv)
-
-        if growth:
-            # Plot Growth
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), final_time_steps_sv, '|s|', 'Time when max reached', 'Growth')
-        if fdr:
-            # Plot Fractal Dimension radius
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), fdr_list_sv, '|s|', 'Fractal Dimension', 'Radius')
-        if fdc:
-            # Plot Fractal Dimension coarse grain
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), fdc_list_sv, '|s|', 'Fractal Dimension', 'Coarse graining')
-        if branch:
-            # Plot Branching Slope
-            env_param_plot(abs(np.vstack(sun_vec_series)[:,1]), branch_slopes_sv, '|s|', 'Branch Slope', 'Branching!')
-
-    if plot_drift_norm:
-
-        drift_vec_norms = drift_vec_series[:5]
-
-        final_time_steps_dn = []
-        fdr_list_dn = []
-        fdc_list_dn = []
-        branch_slopes_dn = []
-        for drift_vec in drift_vec_norms:
-            driftvec_filtered = sim_results[sim_results['drift_vec'].apply(lambda x: x[1] == drift_vec[1])]
-            growth_series_mean_dn, fdr_dn, fdc_dn, slope_dn = analyse_environmental_params(driftvec_filtered, growth = growth, fdr= fdr, fdc=fdc, branch=branch)
-        
-            final_time_steps_dn.append(growth_series_mean_dn)
-            fdr_list_dn.append(fdr_dn)
-            fdc_list_dn.append(fdc_dn)
-            branch_slopes_dn.append(slope_dn)
-
-        drift_vec_list = []
-        for vec in drift_vec_norms:
-            drift_vec_list.append(np.linalg.norm(vec))
-
-        if growth:
-            # Plot Growth
-            env_param_plot(drift_vec_list, final_time_steps_dn, '|d|', 'Time when max reached', 'Growth')
-        if fdr:
-            # Plot Fractal Dimension radius
-            env_param_plot(drift_vec_list, fdr_list_dn, '|d|', 'Fractal Dimension', 'Radius')
-        if fdc:
-            # Plot Fractal Dimension coarse grain
-            env_param_plot(drift_vec_list, fdc_list_dn, '|d|', 'Fractal Dimension', 'Coarse graining')
-        if branch:
-            # Plot Branching Slope
-            env_param_plot(drift_vec_list, branch_slopes_dn, '|d|', 'Branch Slope', 'Branching!')
-
+    Plots the results of changes in the environmental measures.
+    inputs:
+        - param (string): one of four different environmental parameters (sun, drift angle, drift magnitude, nutrient density)
+        - sim_results (pd dataframe): simulation results where the value of param is changed
+        - drift_vec_angle (Bool): when the drift vector is changed, this input is used to tell whether the angle is changed (or magnitude)
+        - growth (Bool): whether you want to plot the speed of growth output plot
+        - fd (Bool): whether you want the fractal dimension plot
+        - branch (Bool): whether you want the plot that shows how the powerlaw exponent changes for different param values
     
+    """
+    assert param == 'drift_vec' or param == 'sun_vec' or param == 'particle_density', 'param must be a string and either drift_vec, sun_vec or particle_density'
+    
+    # Initialize saving lists 
+    mean_time_steps = []
+    ci_time_steps = []
+    fdr_list = []
+    fdc_list = []
+    branch_slopes = []
+
+    # Determine parameter values, transform the parameters and set plot settings
+    if param == 'sun_vec':
+        param_series = sim_results['sun_vec'].apply(tuple).unique()
+        # normalize vector
+        x_values = [np.linalg.norm(vec) for vec in param_series]
+        xlabel = 'Normalized sun vector ($|\\vec{s}|$)'
+        x_log = True
+    elif param == 'drift_vec':
+        param_series = sim_results['drift_vec'].apply(tuple).unique()
+        if drift_vec_angle:
+            # transform vector to the angle in degrees
+            x_values = [math.degrees(math.atan(vec[1]/vec[0])) for vec in param_series]
+            xlabel = 'Angle of drift (degrees)'
+            x_log = False
+        else:
+            # normalize vector
+            x_values = [np.linalg.norm(vec) for vec in param_series]
+            xlabel = 'Norm of drift vector ($|\\vec{d}|$)'
+            x_log = True
+    elif param == 'particle_density':
+        param_series = sim_results['particle_density'].unique()
+        x_values = param_series
+        xlabel = 'Nutrient density'
+        x_log = False
+
+    # Obtain the measures
+    for param_value in param_series:
+        if param == 'particle_density':
+            mask = sim_results[param].apply(lambda x: x == param_value)
+            param_filtered = sim_results[mask]
+        else: 
+            mask = sim_results[param].apply(lambda x: x == list(param_value))
+            param_filtered = sim_results[mask]
+        mean_time_step, ci_time_step, fdr_value, fdc_value, slope = analyse_environmental_params(param_filtered, growth = growth, fdr= fd, fdc=fd, branch=branch)
+    
+        mean_time_steps.append(mean_time_step)
+        ci_time_steps.append(ci_time_step)
+        fdr_list.append(fdr_value)
+        fdc_list.append(fdc_value)
+        branch_slopes.append(slope)
+    
+    if growth:
+        # Plot Growth
+        lower_ci = [interval[0] for interval in ci_time_steps]
+        upper_ci = [interval[1] for interval in ci_time_steps]
+        plt.fill_between(x_values, lower_ci, upper_ci, color = 'yellowgreen', alpha = 0.5)
+        env_param_plot(x_values, mean_time_steps, xlabel, 'Time steps to target mass', color = 'green', title = False, x_log = x_log)
+    if fd:
+        # Plot Fractal Dimension radius
+        plt.plot(x_values, fdr_list, color = 'firebrick', label = 'Radius')
+        # Plot Fractal Dimension coarse grain and add plot settings
+        env_param_plot(x_values, fdc_list, xlabel, 'Fractal Dimension', color = 'lightcoral', title = False, x_log = x_log, label = 'Coarse grain', legend = True)
+    if branch:
+        # Plot Branching Slope
+        env_param_plot(x_values, branch_slopes, xlabel, 'Powerlaw Exponent', color = 'blue', title = False, x_log = x_log)
 
 
-
-
-def env_param_plot(x_values, y_values, x_label, y_label, title = False):
-    plt.plot(x_values, y_values)
+def env_param_plot(x_values, y_values, x_label, y_label, color, title = False, x_log = False, label = False, legend = False):
+    plt.plot(x_values, y_values, color = color, label = label)
     plt.tick_params(labelsize= 15)
     plt.xlabel(x_label, fontsize = 17)
     plt.ylabel(y_label, fontsize = 17)
     if title:
         plt.title(title, fontsize = 19)
+    if x_log:
+        plt.semilogx()
+    if legend:
+        plt.legend(fontsize = 15)
     plt.show()
