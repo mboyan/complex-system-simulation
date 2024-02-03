@@ -8,7 +8,7 @@ This repository contains the Python framework for modelling coral growth using D
 Understanding their behaviour, morphogenesis and lifecycle are essential for their preservation.
 It has been recognised<sup>2</sup> that their growth can be modelled using DLA - an algorithm which generates branching clusters that can closely mimic various natural phenomena, from urban structures<sup>10</sup> to fluid interface instabilities<sup>7</sup>.
 
-The building blocks of corals are polyps - small tentacled invertebrates which live in a symbiotic relationship with photosynthesising microalgae called zooxanthellae.
+The building blocks of corals are polyps - small tentacled invertebrates that live in a symbiotic relationship with photosynthesising microalgae called zooxanthellae.
 The algae hosted in their tissues absorb sunlight to produce most of the energy required for the coral to survive.
 The rest is acquired by the polyps by capturing and digesting nutrients carried by the underwater currents, which can range from zooplankton to small fish.
 Throughout their lifecycle, corals excrete calcium carbonate, which becomes the main component in coral reefs.
@@ -29,9 +29,9 @@ Given the short time frame of the course, we aimed to produce a toy model which 
 - How do drift, growth bias (preferential growth toward sunlight) and surrounding “nutrition” density influence the outcomes of the growth model?
 - How can inhibitory influences (e.g. algae, obstacles (to light), competing species) affect the outcomes of the growth model - as variants in the environmental parameterisations?
 
-The code is structured in four .py modules. The DLA model containing all functions defining the movement, aggregation, initialisation and regeneration of particles can be found in `dla_model.py`. The analysis of the fractal dimension and the branch distribution of DLA-generated "corals" are designated functions in `cs_measures.py`. The experimental setups for executing the simulations and analysing the results are defined as functions in `dla_simulation.py`. Matplotlib functions tend to create a bit of a mess, which is why we contained most of the plotting procedures in a separate module, `vis_tools.py`.
+The code is structured in four .py modules. The DLA model containing all functions defining the movement, aggregation, initialisation and regeneration of particles can be found in `dla_model.py`. The analysis of the fractal dimension and the branch distribution of DLA-generated "corals" are designated functions in `cs_measures.py`. The experimental setups for executing the simulations and analysing the results are defined as functions in `dla_simulation.py`. Matplotlib functions tend to create a bit of a mess, which is why most of the plotting procedures are contained in a separate module, `vis_tools.py`.
 
-A more detailed explanation of the code can be found, together with a documentation of the experimental process, in the [Project Notebook](#).
+A more detailed explanation of the code can be found, together with a documentation of the experimental process, in the [Project Notebook](https://github.com/mboyan/complex-system-simulation/blob/main/Code/ProjectNotebook.ipynb).
 
 ### Prerequisites
 
