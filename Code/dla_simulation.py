@@ -14,7 +14,7 @@ import cs_measures as csm
 import vis_tools as vt
 import powerlaw as pl
 
-def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=1, target_mass=None, drift_vec=[1,0], sun_vec=[1,0], obstacle_boxes=None, **sim_params):
+def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=int(1), target_mass=None, drift_vec=np.array([0,-1]), sun_vec=np.array([0,-1]), obstacle_boxes=None, **sim_params):
     """
     Run a single DLA simulation.
     inputs:
@@ -35,14 +35,14 @@ def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=1, target_mas
         seeds (np.ndarray) - the array of initial seeds
     """
     
-    assert n_seeds.dtype == int, 'number of seeds must be an integer'
+    assert type(n_seeds) == int, 'number of seeds must be an integer'
     assert n_seeds > 0, 'number of seeds must be positive'
 
     # Unpack fixed simulation parameters
     periodic = sim_params.get('periodic', (False, True))
     move_moore = sim_params.get('move_moore', False)
     aggr_moore = sim_params.get('aggr_moore', False)
-    regen_mode = sim_params.get('regen_mode', False)
+    regen_mode = sim_params.get('regen_mode', None)
     track_radius = sim_params.get('track_radius', False)
 
     assert (track_radius == True and n_seeds == 1) or track_radius == False, 'radius tracking only works for single seed simulations'
@@ -126,8 +126,9 @@ def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=1, target_mas
             break
 
     # Check if target mass was reached
-    if np.sum(current_lattice) < target_mass:
-        print(f'Target mass not reached by {target_mass - np.sum(current_lattice)} within given time steps!')
+    if target_mass is not None:
+        if np.sum(current_lattice) < target_mass:
+            print(f'Target mass not reached by {target_mass - np.sum(current_lattice)} within given time steps!')
 
     # Trim frames
     lattice_frames = lattice_frames[:step + 1]

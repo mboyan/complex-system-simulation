@@ -133,7 +133,7 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
         bndry_weights (np.ndarray) - an array of probabilities for regenerating particles at the boundaries in each dimension
         obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
     """
-
+    
     lattice_dims = np.ndim(lattice)
     assert len(set(lattice.shape)) == 1, 'lattice is not a square array'
     assert lattice_dims > 1
@@ -146,14 +146,6 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
         empty_locs = np.argwhere((lattice == 0) & (obstacles == 0))
 
     assert n_particles <= empty_locs.shape[0], 'too many particles to regenerate'
-
-    # if gravity:
-    #     # regenerate particles in the top of the grid
-    #     regen_coords = empty_locs[np.random.choice(int(0.2 * empty_locs.shape[0]), size=n_particles, replace=False)]
-
-    # else:
-    #     # regenerate particles randomly wherever there are no seeds
-    #     regen_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
     
     if bndry_weights is not None:
         # Regenerate particles at the boundary
@@ -173,13 +165,17 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
         slice_selected = slices[np.random.choice(len(slices), p=bndry_weights.flatten())]
 
         # Generate indices for each dimension
-        indices = [np.arange(size) for size in lattice.shape]
+        # indices = [np.arange(size) for size in lattice.shape]
 
         # Combine the indices into a grid
-        coords = np.stack(np.meshgrid(*indices, indexing='ij'), -1)
+        # coords = np.stack(np.meshgrid(*indices, indexing='ij'), -1)
+        coords = np.stack(np.mgrid[[slice(0, size) for size in lattice.shape]], axis=-1)
 
         # Pick random particle coordinates from the selected slice
-        regen_coords = coords[slice_selected][np.random.choice(coords[slice_selected].shape[0], size=n_particles, replace=True)]
+        # regen_coords = coords[slice_selected][np.random.choice(coords[slice_selected].shape[0], size=n_particles, replace=True)]
+        coords_slice = coords[slice_selected]
+        coords_slice = coords_slice.reshape(-1, coords_slice.shape[-1])
+        regen_coords = coords_slice[np.random.choice(coords[slice_selected].shape[0], size=n_particles, replace=True)]
 
     else:
         # Regenerate particles randomly wherever there are no seeds
@@ -205,6 +201,9 @@ def regen_probabilities(nbr_coords, nbr_weights):
     dim_weights_start = [np.sum(nbr_weights[nbr_coords[:, dim] == 1]) for dim in range(lattice_dims)]
     dim_weights_end = [np.sum(nbr_weights[nbr_coords[:, dim] == -1]) for dim in range(lattice_dims)]
     bndry_weights = np.vstack((dim_weights_start, dim_weights_end)).T
+
+    # Normalize weights
+    bndry_weights /= np.sum(bndry_weights)
     
     return bndry_weights
 
@@ -280,7 +279,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     # Generate particle reserves
     if not np.all(np.array(periodic)):
         particles_regen = regen_particles(lattice, particles_in.shape[0], bndry_weights=bndry_weights, obstacles=obstacles)
-    
+
     # Wrap around or regenerate
     for i, p in enumerate(periodic):
         if p:

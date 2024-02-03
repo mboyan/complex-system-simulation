@@ -134,6 +134,8 @@ def animate_lattice_2D(lattice_data_frames, interval=100):
 
     n_frames = lattice_data_frames.shape[0]
 
+    cell_size = 2
+
     # Flip lattice data frames to match the orientation of the animation
     lattice_data_frames = np.moveaxis(lattice_data_frames, 1, 2)
     lattice_data_frames = np.flip(lattice_data_frames, axis=1)
@@ -141,7 +143,7 @@ def animate_lattice_2D(lattice_data_frames, interval=100):
     # Set up figure and axis
     fig = plt.figure()
     # fig = plt.figure(figsize=(lattice_data_frames.shape[1] * cell_size, lattice_data_frames.shape[2] * cell_size))
-    img = plt.imshow(np.random.randint(2, size=((lattice_data_frames.shape[1], lattice_data_frames.shape[2]))), cmap = 'tab20b')
+    img = plt.imshow(np.random.randint(2, size=((lattice_data_frames.shape[1] * cell_size, lattice_data_frames.shape[2] * cell_size))), cmap = 'tab20b')
 
     # Animation update function
     def animate(i):
@@ -297,7 +299,7 @@ def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts,
     if branches is not None:
         branch_lengths = [len(branch) for branch in branches]
         _, _, alpha, plaw_verification = csm.verify_power_law(branch_lengths, ax=ax)
-        
+
         C = branch_length_counts[2]/(branch_lengths_unique[2]**(-alpha))
         xs = branch_lengths_unique
         ys = C*xs**(-alpha)
