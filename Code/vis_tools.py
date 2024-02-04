@@ -298,7 +298,7 @@ def plot_branch_length_distribution(branch_lengths_unique, branch_length_counts,
 
     if branches is not None:
         branch_lengths = [len(branch) for branch in branches]
-        _, _, alpha, plaw_verification = csm.verify_power_law(branch_lengths, ax=ax)
+        _, _, alpha, plaw_verification = csm.verify_power_law(branch_lengths)
 
         C = branch_length_counts[2]/(branch_lengths_unique[2]**(-alpha))
         xs = branch_lengths_unique

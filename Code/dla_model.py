@@ -18,13 +18,15 @@ def init_seeds_bottom(lattice_size, n_seeds, n_dims=2):
     outputs:
         seed_coords (np.array) - an array of lattice site coordinates for the placement of initial seeds
     """
-    assert 1 <= n_seeds <= lattice_size
+    assert 1 <= n_seeds <= lattice_size, 'invalid number of seeds'
+    assert n_dims > 1, 'number of dimensions must be higher than 1'
 
+    # Create equally spaced x coords
     x_coords = np.delete(np.arange(0, n_seeds + 1), 0) * int(lattice_size/(n_seeds + 1))
-    rest_coords = np.tile(np.zeros(n_seeds), (n_dims - 1, 1))
-    # y_coords = np.zeros(n_seeds)
 
-    # seed_coords = np.column_stack((x_coords, y_coords))
+    # Set last coordinate to zero, the rest to half the lattice
+    rest_coords = np.repeat((int(0.5*lattice_size), 0), (n_dims - 2, 1))[:, np.newaxis]
+    
     seed_coords = np.insert(rest_coords, 0, x_coords.reshape((1, -1)), axis=0).T
 
     return seed_coords.astype(int)

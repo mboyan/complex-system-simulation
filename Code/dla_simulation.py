@@ -35,7 +35,7 @@ def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=int(1), targe
         seeds (np.ndarray) - the array of initial seeds
     """
     
-    assert type(n_seeds) == int, 'number of seeds must be an integer'
+    assert type(n_seeds) == int or type(n_seeds) == np.int64 or type(n_seeds) == np.int32, 'number of seeds must be an integer'
     assert n_seeds > 0, 'number of seeds must be positive'
 
     # Unpack fixed simulation parameters
