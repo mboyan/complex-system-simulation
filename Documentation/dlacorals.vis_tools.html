@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module dlacorals.vis_tools</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="dlacorals.html" class="white">dlacorals</a>.vis_tools</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cmihbo%5Canaconda3%5Clib%5Csite-packages%5Cdlacorals%5Cvis_tools.py">c:\users\mihbo\anaconda3\lib\site-packages\dlacorals\vis_tools.py</a></td></tr></table>
+    <p><span class="code">This&nbsp;module&nbsp;contains&nbsp;functions&nbsp;for&nbsp;visualising&nbsp;plots&nbsp;and&nbsp;animations&nbsp;of&nbsp;DLA&nbsp;simulation&nbsp;results.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="matplotlib.animation.html">matplotlib.animation</a><br>
+<a href="matplotlib.cm.html">matplotlib.cm</a><br>
+</td><td class="multicolumn"><a href="dlacorals.cs_measures.html">dlacorals.cs_measures</a><br>
+<a href="numpy.html">numpy</a><br>
+</td><td class="multicolumn"><a href="matplotlib.pyplot.html">matplotlib.pyplot</a><br>
+<a href="seaborn.html">seaborn</a><br>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-animate_lattice"><strong>animate_lattice</strong></a>(lattice_data_frames, interval)</dt><dd><span class="code">Check&nbsp;lattice&nbsp;data&nbsp;and&nbsp;dispatch&nbsp;to&nbsp;either&nbsp;2D&nbsp;or&nbsp;3D&nbsp;animation&nbsp;function.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_data_frames&nbsp;(3D&nbsp;numpy.ndarray)&nbsp;-&nbsp;time&nbsp;frames&nbsp;of&nbsp;lattice&nbsp;states<br>
+&nbsp;&nbsp;&nbsp;&nbsp;interval&nbsp;(int)&nbsp;-&nbsp;time&nbsp;between&nbsp;frames&nbsp;in&nbsp;milliseconds<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;HTML5&nbsp;video&nbsp;of&nbsp;the&nbsp;animation</span></dd></dl>
+ <dl><dt><a name="-animate_lattice_2D"><strong>animate_lattice_2D</strong></a>(lattice_data_frames, interval=100)</dt><dd><span class="code">Creates&nbsp;a&nbsp;2D&nbsp;plot&nbsp;animation&nbsp;from&nbsp;snapshots&nbsp;of&nbsp;lattice&nbsp;states.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_data_frames&nbsp;(3D&nbsp;numpy.ndarray)&nbsp;-&nbsp;time&nbsp;frames&nbsp;of&nbsp;lattice&nbsp;states<br>
+&nbsp;&nbsp;&nbsp;&nbsp;interval&nbsp;(int)&nbsp;-&nbsp;time&nbsp;between&nbsp;frames&nbsp;in&nbsp;milliseconds<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;HTML5&nbsp;video&nbsp;of&nbsp;the&nbsp;animation</span></dd></dl>
+ <dl><dt><a name="-animate_lattice_3D"><strong>animate_lattice_3D</strong></a>(lattice_data_frames, interval=100)</dt><dd><span class="code">Creates&nbsp;a&nbsp;3D&nbsp;plot&nbsp;animation&nbsp;from&nbsp;snapshots&nbsp;of&nbsp;lattice&nbsp;states.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_data_frames&nbsp;(3D&nbsp;numpy.ndarray)&nbsp;-&nbsp;time&nbsp;frames&nbsp;of&nbsp;lattice&nbsp;states<br>
+&nbsp;&nbsp;&nbsp;&nbsp;interval&nbsp;(int)&nbsp;-&nbsp;time&nbsp;between&nbsp;frames&nbsp;in&nbsp;milliseconds<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;HTML5&nbsp;video&nbsp;of&nbsp;the&nbsp;animation</span></dd></dl>
+ <dl><dt><a name="-plot_branch_length_distribution"><strong>plot_branch_length_distribution</strong></a>(branch_lengths_unique, branch_length_counts, branches=None, ax=None, title=None)</dt><dd><span class="code">Plots&nbsp;the&nbsp;distribution&nbsp;of&nbsp;branch&nbsp;lengths&nbsp;in&nbsp;a&nbsp;DLA&nbsp;cluster<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branch_lengths_unique&nbsp;(list)&nbsp;-&nbsp;a&nbsp;list&nbsp;of&nbsp;unique&nbsp;branch&nbsp;lengths<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branch_length_counts&nbsp;(list)&nbsp;-&nbsp;a&nbsp;list&nbsp;of&nbsp;the&nbsp;number&nbsp;of&nbsp;branches&nbsp;of&nbsp;each&nbsp;length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branches&nbsp;(list)&nbsp;-&nbsp;a&nbsp;list&nbsp;of&nbsp;lists&nbsp;of&nbsp;nodes&nbsp;(tuples)&nbsp;representing&nbsp;the&nbsp;branches&nbsp;of&nbsp;a&nbsp;DLA&nbsp;cluster;&nbsp;if&nbsp;provided,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;power&nbsp;law&nbsp;distribution&nbsp;will&nbsp;be&nbsp;verified;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;(matplotlib.axes.Axes)&nbsp;-&nbsp;an&nbsp;axis&nbsp;to&nbsp;plot&nbsp;on;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title&nbsp;(str)&nbsp;-&nbsp;a&nbsp;label&nbsp;for&nbsp;the&nbsp;plot;&nbsp;defaults&nbsp;to&nbsp;None</span></dd></dl>
+ <dl><dt><a name="-plot_fractal_dimension"><strong>plot_fractal_dimension</strong></a>(scale_series, n_box_series, coeffs, ax=None, title=None)</dt><dd><span class="code">Plots&nbsp;the&nbsp;relationship&nbsp;between&nbsp;N(epsilon)&nbsp;(number&nbsp;of&nbsp;boxes&nbsp;of&nbsp;size&nbsp;epsilon)<br>
+and&nbsp;1/epsilon&nbsp;(inverse&nbsp;of&nbsp;box&nbsp;size)&nbsp;on&nbsp;a&nbsp;log-log&nbsp;plot,&nbsp;illustrating&nbsp;the&nbsp;analysed&nbsp;fractal&nbsp;dimension<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;scale_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;box&nbsp;sizes<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_box_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;occupied&nbsp;box&nbsp;counts<br>
+&nbsp;&nbsp;&nbsp;&nbsp;coeffs&nbsp;(np.ndarray)&nbsp;-&nbsp;the&nbsp;coefficients&nbsp;of&nbsp;the&nbsp;linear&nbsp;regression<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;(matplotlib.axes.Axes)&nbsp;-&nbsp;an&nbsp;axis&nbsp;to&nbsp;plot&nbsp;on;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title&nbsp;(str)&nbsp;-&nbsp;a&nbsp;title&nbsp;for&nbsp;the&nbsp;plot;&nbsp;defaults&nbsp;to&nbsp;None</span></dd></dl>
+ <dl><dt><a name="-plot_lattice"><strong>plot_lattice</strong></a>(lattice, branches=None, ax=None, title=None, cell_size=1)</dt><dd><span class="code">Check&nbsp;lattice&nbsp;data&nbsp;and&nbsp;dispatch&nbsp;to&nbsp;either&nbsp;2D&nbsp;or&nbsp;3D&nbsp;plot&nbsp;function.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;2D&nbsp;or&nbsp;3D&nbsp;lattice&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branches&nbsp;(list)&nbsp;-&nbsp;a&nbsp;list&nbsp;of&nbsp;lists&nbsp;of&nbsp;nodes&nbsp;(tuples)&nbsp;representing&nbsp;the&nbsp;branches&nbsp;of&nbsp;a&nbsp;DLA&nbsp;cluster;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;provided,&nbsp;the&nbsp;branches&nbsp;will&nbsp;be&nbsp;assigned&nbsp;different&nbsp;colours;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;(matplotlib.axes.Axes)&nbsp;-&nbsp;an&nbsp;axis&nbsp;to&nbsp;plot&nbsp;on;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title&nbsp;(str)&nbsp;-&nbsp;a&nbsp;title&nbsp;for&nbsp;the&nbsp;plot;&nbsp;defaults&nbsp;to&nbsp;None</span></dd></dl>
+ <dl><dt><a name="-plot_lattice_2D"><strong>plot_lattice_2D</strong></a>(lattice, cmap='tab20b', ax=None, title=None, cell_size=1)</dt><dd><span class="code">Plots&nbsp;a&nbsp;2D&nbsp;lattice<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;2D&nbsp;lattice&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmap&nbsp;(str)&nbsp;-&nbsp;a&nbsp;matplotlib&nbsp;colormap;&nbsp;defaults&nbsp;to&nbsp;'tab20b'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;(matplotlib.axes.Axes)&nbsp;-&nbsp;an&nbsp;axis&nbsp;to&nbsp;plot&nbsp;on;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title&nbsp;(str)&nbsp;-&nbsp;a&nbsp;title&nbsp;for&nbsp;the&nbsp;plot;&nbsp;defaults&nbsp;to&nbsp;None</span></dd></dl>
+ <dl><dt><a name="-plot_lattice_3D"><strong>plot_lattice_3D</strong></a>(lattice, cmap='tab20b', ax=None, title=None)</dt><dd><span class="code">Plots&nbsp;a&nbsp;3D&nbsp;lattice<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;3D&nbsp;lattice&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmap&nbsp;(str)&nbsp;-&nbsp;a&nbsp;matplotlib&nbsp;colormap;&nbsp;defaults&nbsp;to&nbsp;'tab20b'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;(matplotlib.axes.Axes)&nbsp;-&nbsp;an&nbsp;axis&nbsp;to&nbsp;plot&nbsp;on;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title&nbsp;(str)&nbsp;-&nbsp;a&nbsp;title&nbsp;for&nbsp;the&nbsp;plot;&nbsp;defaults&nbsp;to&nbsp;None</span></dd></dl>
+ <dl><dt><a name="-plot_mass_over_time"><strong>plot_mass_over_time</strong></a>(mass_series, ax=None, title=None)</dt><dd><span class="code">Plots&nbsp;the&nbsp;mass&nbsp;of&nbsp;a&nbsp;DLA&nbsp;cluster&nbsp;over&nbsp;time<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mass_series&nbsp;(ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;tuples&nbsp;(t,&nbsp;m)&nbsp;indicating&nbsp;the&nbsp;time&nbsp;indices&nbsp;and&nbsp;masses&nbsp;at&nbsp;each&nbsp;time&nbsp;step</span></dd></dl>
+</td></tr></table>
+</body></html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module dlacorals.dla_simulation</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="dlacorals.html" class="white">dlacorals</a>.dla_simulation</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cmihbo%5Canaconda3%5Clib%5Csite-packages%5Cdlacorals%5Cdla_simulation.py">c:\users\mihbo\anaconda3\lib\site-packages\dlacorals\dla_simulation.py</a></td></tr></table>
+    <p><span class="code">This&nbsp;module&nbsp;contains&nbsp;functions&nbsp;for&nbsp;setting&nbsp;up&nbsp;and&nbsp;running&nbsp;series&nbsp;of&nbsp;DLA&nbsp;simulations.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="dlacorals.cs_measures.html">dlacorals.cs_measures</a><br>
+<a href="dlacorals.dla_model.html">dlacorals.dla_model</a><br>
+<a href="math.html">math</a><br>
+</td><td class="multicolumn"><a href="numpy.html">numpy</a><br>
+<a href="pandas.html">pandas</a><br>
+<a href="powerlaw.html">powerlaw</a><br>
+</td><td class="multicolumn"><a href="matplotlib.pyplot.html">matplotlib.pyplot</a><br>
+<a href="scipy.stats.html">scipy.stats</a><br>
+<a href="dlacorals.vis_tools.html">dlacorals.vis_tools</a><br>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-analyse_dla_patterns"><strong>analyse_dla_patterns</strong></a>(n_sims, lattice_size_series, max_timesteps_series, n_seeds_series, particle_density_series, target_mass_series, drift_vec_series, sun_vec_series, obstacle_box_series, fdim_measure=None, calc_branch_distr=False, calc_mass=False, n_saved_sims=1, **sim_params)</dt><dd><span class="code">Runs&nbsp;a&nbsp;series&nbsp;of&nbsp;simulations&nbsp;to&nbsp;estimate&nbsp;the&nbsp;mean&nbsp;fractal&nbsp;dimension&nbsp;of&nbsp;DLA&nbsp;structures.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_sims&nbsp;(int)&nbsp;-&nbsp;the&nbsp;number&nbsp;of&nbsp;simulations&nbsp;to&nbsp;run&nbsp;for&nbsp;each&nbsp;parameter&nbsp;combination<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_size_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;lattice&nbsp;sizes<br>
+&nbsp;&nbsp;&nbsp;&nbsp;max_timesteps_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;maximum&nbsp;time&nbsp;steps<br>
+&nbsp;&nbsp;&nbsp;&nbsp;particle_density_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;particle&nbsp;densities<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_seeds_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;seed&nbsp;numbers<br>
+&nbsp;&nbsp;&nbsp;&nbsp;target_mass_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;target&nbsp;masses<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fdim_measure&nbsp;(str)&nbsp;-&nbsp;selects&nbsp;the&nbsp;fractal&nbsp;dimension&nbsp;measuring&nbsp;method,&nbsp;can&nbsp;be&nbsp;None&nbsp;/&nbsp;'cgrain'&nbsp;(coarse-graining)&nbsp;/&nbsp;'radius'&nbsp;(radius-based&nbsp;scale)&nbsp;/&nbsp;'both'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;calc_branch_distr&nbsp;(bool)&nbsp;-&nbsp;if&nbsp;True,&nbsp;compute&nbsp;the&nbsp;branch&nbsp;distribution&nbsp;of&nbsp;the&nbsp;DLA&nbsp;structure;&nbsp;defaults&nbsp;to&nbsp;False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;calc_mass&nbsp;(bool)&nbsp;-&nbsp;if&nbsp;True,&nbsp;compute&nbsp;the&nbsp;mass&nbsp;of&nbsp;the&nbsp;DLA&nbsp;structure&nbsp;over&nbsp;time;&nbsp;defaults&nbsp;to&nbsp;False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_saved_sims&nbsp;(int)&nbsp;-&nbsp;the&nbsp;number&nbsp;of&nbsp;DLA&nbsp;evolutions&nbsp;to&nbsp;save&nbsp;for&nbsp;each&nbsp;parameter&nbsp;combination;&nbsp;defaults&nbsp;to&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sim_params&nbsp;(dict)&nbsp;-&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;simulation&nbsp;parameters<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sim_results&nbsp;(pd.DataFrame)&nbsp;-&nbsp;a&nbsp;dataframe&nbsp;of&nbsp;simulation&nbsp;results<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dla_evolutions&nbsp;(dict)&nbsp;-&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;saved&nbsp;DLA&nbsp;evolutions&nbsp;in&nbsp;the&nbsp;form&nbsp;of&nbsp;n-D&nbsp;lattice&nbsp;series<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;containing&nbsp;the&nbsp;aggregate&nbsp;states&nbsp;and&nbsp;particle&nbsp;positions&nbsp;over&nbsp;time</span></dd></dl>
+ <dl><dt><a name="-analyse_environmental_params"><strong>analyse_environmental_params</strong></a>(sim_results_param, growth=False, fdr=False, fdc=False, branch=False)</dt><dd><span class="code">Analyzes&nbsp;the&nbsp;structural&nbsp;features&nbsp;and&nbsp;'coralness'&nbsp;of&nbsp;the&nbsp;corals&nbsp;for&nbsp;one&nbsp;value&nbsp;of&nbsp;a&nbsp;changed&nbsp;parameter.<br>
+Four&nbsp;things&nbsp;are&nbsp;analyzed:<br>
+1.&nbsp;Speed&nbsp;of&nbsp;growth,&nbsp;determined&nbsp;by&nbsp;the&nbsp;amount&nbsp;of&nbsp;time&nbsp;steps&nbsp;it&nbsp;takes&nbsp;to&nbsp;get&nbsp;to&nbsp;the&nbsp;target&nbsp;mass.<br>
+2.&nbsp;Fractal&nbsp;Dimension,&nbsp;using&nbsp;the&nbsp;radius&nbsp;to&nbsp;determine&nbsp;the&nbsp;scale.<br>
+3.&nbsp;Fractal&nbsp;Dimension,&nbsp;using&nbsp;coarse&nbsp;graining&nbsp;to&nbsp;determine&nbsp;the&nbsp;scale.<br>
+4.&nbsp;Slope&nbsp;of&nbsp;powerlaw&nbsp;found&nbsp;for&nbsp;the&nbsp;length&nbsp;of&nbsp;the&nbsp;DLA&nbsp;branches.<br>
+&nbsp;<br>
+input:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;sim_results_param&nbsp;(np.array):&nbsp;the&nbsp;results&nbsp;of&nbsp;multiple&nbsp;runs&nbsp;of&nbsp;the&nbsp;simulation&nbsp;for&nbsp;the&nbsp;specific&nbsp;value&nbsp;of&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;parameter.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;growth&nbsp;(Bool)&nbsp;-&nbsp;whether&nbsp;the&nbsp;speed&nbsp;of&nbsp;growth&nbsp;(1)&nbsp;is&nbsp;given&nbsp;as&nbsp;output.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;fdr&nbsp;(Bool)&nbsp;-&nbsp;whether&nbsp;the&nbsp;fractal&nbsp;dimension&nbsp;using&nbsp;radius&nbsp;scale&nbsp;(2)&nbsp;is&nbsp;given&nbsp;as&nbsp;output.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;fdc&nbsp;(Bool)&nbsp;-&nbsp;whether&nbsp;the&nbsp;fractal&nbsp;dimension&nbsp;using&nbsp;coarse&nbsp;graining&nbsp;scale&nbsp;(3)&nbsp;is&nbsp;given&nbsp;as&nbsp;output.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;branch&nbsp;(Bool)&nbsp;-&nbsp;whether&nbsp;the&nbsp;slope&nbsp;the&nbsp;power&nbsp;law&nbsp;fitted&nbsp;to&nbsp;the&nbsp;branch&nbsp;sizes&nbsp;(4)&nbsp;is&nbsp;given&nbsp;as&nbsp;output.<br>
+&nbsp;<br>
+output:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;growth_series_mean&nbsp;(float)&nbsp;-&nbsp;the&nbsp;average&nbsp;amount&nbsp;of&nbsp;time&nbsp;steps&nbsp;before&nbsp;the&nbsp;target&nbsp;mass&nbsp;is&nbsp;reached.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;fdr&nbsp;(float)&nbsp;-&nbsp;fractal&nbsp;dimension&nbsp;determined&nbsp;with&nbsp;radius&nbsp;scale&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;fdc&nbsp;(float)&nbsp;-&nbsp;fractal&nbsp;dimension&nbsp;determined&nbsp;with&nbsp;coarse-graining&nbsp;scale<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;slope&nbsp;(float)&nbsp;-&nbsp;slope&nbsp;of&nbsp;the&nbsp;power&nbsp;law&nbsp;fitted&nbsp;to&nbsp;the&nbsp;branch&nbsp;sizes</span></dd></dl>
+ <dl><dt><a name="-analyse_sim_results"><strong>analyse_sim_results</strong></a>(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=True, plot_branch_distr=True, dla_evolutions=None, title_on=False)</dt><dd><span class="code">Unpacks&nbsp;the&nbsp;results&nbsp;of&nbsp;a&nbsp;DLA&nbsp;simulation&nbsp;series,&nbsp;calculates&nbsp;statistics&nbsp;and&nbsp;plots&nbsp;the&nbsp;results.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sim_results&nbsp;(pd.DataFrame)&nbsp;-&nbsp;a&nbsp;dataframe&nbsp;of&nbsp;simulation&nbsp;results<br>
+&nbsp;&nbsp;&nbsp;&nbsp;plot_mass&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;plot&nbsp;the&nbsp;mass&nbsp;distribution&nbsp;for&nbsp;each&nbsp;parameter&nbsp;combination;&nbsp;defaults&nbsp;to&nbsp;True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;plot_fdr&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;plot&nbsp;the&nbsp;radius-based&nbsp;fractal&nbsp;dimension&nbsp;for&nbsp;each&nbsp;parameter&nbsp;combination;&nbsp;defaults&nbsp;to&nbsp;True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;plot_fdc&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;plot&nbsp;the&nbsp;coarse-graining-based&nbsp;fractal&nbsp;dimension&nbsp;for&nbsp;each&nbsp;parameter&nbsp;combination;&nbsp;defaults&nbsp;to&nbsp;True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;plot_branch_distr&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;plot&nbsp;the&nbsp;branch&nbsp;distribution&nbsp;for&nbsp;each&nbsp;parameter&nbsp;combination;&nbsp;defaults&nbsp;to&nbsp;True<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dla_evolutions&nbsp;(dict)&nbsp;-&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;saved&nbsp;DLA&nbsp;evolutions&nbsp;in&nbsp;the&nbsp;form&nbsp;of&nbsp;n-D&nbsp;lattice&nbsp;series<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;containing&nbsp;the&nbsp;aggregate&nbsp;states&nbsp;and&nbsp;particle&nbsp;positions&nbsp;over&nbsp;time;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title_on&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;display&nbsp;the&nbsp;parameter&nbsp;combination&nbsp;as&nbsp;the&nbsp;title&nbsp;of&nbsp;each&nbsp;plot;&nbsp;defaults&nbsp;to&nbsp;False</span></dd></dl>
+ <dl><dt><a name="-convert_to_tuple"><strong>convert_to_tuple</strong></a>(nested_list)</dt><dd><span class="code">Converts&nbsp;a&nbsp;nested&nbsp;list&nbsp;to&nbsp;a&nbsp;tuple.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nested_list&nbsp;(list)&nbsp;-&nbsp;a&nbsp;list&nbsp;that&nbsp;may&nbsp;contain&nbsp;other&nbsp;lists<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nested_tuple&nbsp;(tuple)&nbsp;-&nbsp;a&nbsp;tuple&nbsp;with&nbsp;the&nbsp;same&nbsp;elements&nbsp;as&nbsp;nested_list,&nbsp;but&nbsp;with&nbsp;all&nbsp;lists&nbsp;converted&nbsp;to&nbsp;tuples</span></dd></dl>
+ <dl><dt><a name="-env_param_plot"><strong>env_param_plot</strong></a>(x_values, y_values, x_label, y_label, color, title=False, x_log=False, label=False, legend=False)</dt><dd><span class="code">Plot&nbsp;font&nbsp;settings&nbsp;and&nbsp;plot&nbsp;the&nbsp;environmental&nbsp;parameter&nbsp;results<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;x_values&nbsp;(np.array)&nbsp;-&nbsp;the&nbsp;x&nbsp;values<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;y_values&nbsp;(np.array)&nbsp;-&nbsp;the&nbsp;y&nbsp;values<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;x_label&nbsp;(str)&nbsp;-&nbsp;the&nbsp;label&nbsp;of&nbsp;the&nbsp;x&nbsp;axis<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;y_label&nbsp;(str)&nbsp;-&nbsp;the&nbsp;label&nbsp;of&nbsp;the&nbsp;y&nbsp;axis<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;color&nbsp;(str)&nbsp;-&nbsp;the&nbsp;color&nbsp;of&nbsp;the&nbsp;plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;title&nbsp;(False&nbsp;or&nbsp;string)&nbsp;-&nbsp;the&nbsp;title&nbsp;of&nbsp;the&nbsp;plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;x_log&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;the&nbsp;x&nbsp;axis&nbsp;should&nbsp;be&nbsp;logarithmic<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;label&nbsp;(False&nbsp;or&nbsp;str)&nbsp;-&nbsp;the&nbsp;label&nbsp;of&nbsp;the&nbsp;plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;legend&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;you&nbsp;want&nbsp;to&nbsp;plot&nbsp;a&nbsp;legend</span></dd></dl>
+ <dl><dt><a name="-plot_environmental_results"><strong>plot_environmental_results</strong></a>(param, sim_results, drift_vec_angle=False, growth=True, fd=True, branch=True)</dt><dd><span class="code">Plots&nbsp;the&nbsp;results&nbsp;of&nbsp;changes&nbsp;in&nbsp;the&nbsp;environmental&nbsp;measures.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;param&nbsp;(str)&nbsp;-&nbsp;one&nbsp;of&nbsp;four&nbsp;different&nbsp;environmental&nbsp;parameters&nbsp;(sun,&nbsp;drift&nbsp;angle,&nbsp;drift&nbsp;magnitude,&nbsp;nutrient&nbsp;density)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;sim_results&nbsp;(pd&nbsp;dataframe)&nbsp;-&nbsp;simulation&nbsp;results&nbsp;where&nbsp;the&nbsp;value&nbsp;of&nbsp;param&nbsp;is&nbsp;changed<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;drift_vec_angle&nbsp;(bool)&nbsp;-&nbsp;when&nbsp;the&nbsp;drift&nbsp;vector&nbsp;is&nbsp;changed,&nbsp;this&nbsp;input&nbsp;is&nbsp;used&nbsp;to&nbsp;tell&nbsp;whether&nbsp;the&nbsp;angle&nbsp;is&nbsp;changed&nbsp;(or&nbsp;magnitude)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;growth&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;you&nbsp;want&nbsp;to&nbsp;plot&nbsp;the&nbsp;speed&nbsp;of&nbsp;growth&nbsp;output&nbsp;plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;fd&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;you&nbsp;want&nbsp;the&nbsp;fractal&nbsp;dimension&nbsp;plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;branch&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;you&nbsp;want&nbsp;the&nbsp;plot&nbsp;that&nbsp;shows&nbsp;how&nbsp;the&nbsp;powerlaw&nbsp;exponent&nbsp;changes&nbsp;for&nbsp;different&nbsp;param&nbsp;values</span></dd></dl>
+ <dl><dt><a name="-run_dla"><strong>run_dla</strong></a>(lattice_size, max_timesteps, particle_density, n_seeds=1, target_mass=None, drift_vec=array([ 0, -1]), sun_vec=array([ 0, -1]), obstacle_boxes=None, **sim_params)</dt><dd><span class="code">Run&nbsp;a&nbsp;single&nbsp;DLA&nbsp;simulation.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_size&nbsp;(int)&nbsp;-&nbsp;the&nbsp;size&nbsp;of&nbsp;the&nbsp;lattice&nbsp;along&nbsp;one&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;time_steps&nbsp;(int)&nbsp;-&nbsp;the&nbsp;number&nbsp;of&nbsp;time&nbsp;steps&nbsp;for&nbsp;the&nbsp;simulation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;max_timesteps&nbsp;(int)&nbsp;-&nbsp;the&nbsp;maximum&nbsp;number&nbsp;of&nbsp;time&nbsp;steps&nbsp;for&nbsp;the&nbsp;simulation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;particle_density&nbsp;(float)&nbsp;-&nbsp;a&nbsp;number&nbsp;between&nbsp;0&nbsp;and&nbsp;1&nbsp;determining&nbsp;the&nbsp;percentage&nbsp;/&nbsp;density&nbsp;of&nbsp;particles&nbsp;on&nbsp;the&nbsp;lattice<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_seeds&nbsp;(int)&nbsp;-&nbsp;number&nbsp;of&nbsp;seeds&nbsp;to&nbsp;generate&nbsp;at&nbsp;the&nbsp;bottom&nbsp;of&nbsp;the&nbsp;lattice<br>
+&nbsp;&nbsp;&nbsp;&nbsp;target_mass&nbsp;(int)&nbsp;-&nbsp;if&nbsp;specified,&nbsp;the&nbsp;number&nbsp;of&nbsp;DLA&nbsp;cells&nbsp;to&nbsp;reach&nbsp;before&nbsp;stopping&nbsp;the&nbsp;simulation;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;obstacle_boxes&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;obstacle&nbsp;box&nbsp;coordinates&nbsp;(diagonal&nbsp;corners&nbsp;in&nbsp;flattened&nbsp;form,&nbsp;e.g.&nbsp;x1,&nbsp;x2,&nbsp;y1,&nbsp;y2,&nbsp;...);&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;drift_vec&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;vector&nbsp;determining&nbsp;the&nbsp;drift&nbsp;direction&nbsp;of&nbsp;particles&nbsp;(movement&nbsp;direction&nbsp;bias);&nbsp;defaults&nbsp;to&nbsp;[1,0]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sun_vec&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;vector&nbsp;determining&nbsp;the&nbsp;direction&nbsp;of&nbsp;the&nbsp;sun&nbsp;(growth&nbsp;direction&nbsp;bias);&nbsp;defaults&nbsp;to&nbsp;[1,0]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sim_params&nbsp;(dict)&nbsp;-&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;simulation&nbsp;parameters&nbsp;which&nbsp;are&nbsp;constant&nbsp;among&nbsp;all&nbsp;simulations<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_frames&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;lattice&nbsp;states<br>
+&nbsp;&nbsp;&nbsp;&nbsp;particles_frames&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;particle&nbsp;coordinates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dla_radii&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;maximum&nbsp;DLA&nbsp;radii<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seeds&nbsp;(np.ndarray)&nbsp;-&nbsp;the&nbsp;array&nbsp;of&nbsp;initial&nbsp;seeds</span></dd></dl>
+</td></tr></table>
+</body></html>

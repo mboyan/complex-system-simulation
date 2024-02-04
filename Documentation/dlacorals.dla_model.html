@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module dlacorals.dla_model</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="dlacorals.html" class="white">dlacorals</a>.dla_model</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cmihbo%5Canaconda3%5Clib%5Csite-packages%5Cdlacorals%5Cdla_model.py">c:\users\mihbo\anaconda3\lib\site-packages\dlacorals\dla_model.py</a></td></tr></table>
+    <p><span class="code">This&nbsp;module&nbsp;contains&nbsp;functions&nbsp;for&nbsp;a&nbsp;single&nbsp;simulation&nbsp;instance&nbsp;of&nbsp;a&nbsp;Diffusion-Limited&nbsp;Aggregation&nbsp;(DLA)&nbsp;model.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="numpy.html">numpy</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-aggregate_particles"><strong>aggregate_particles</strong></a>(particles, lattice, prop_particles=None, moore=False, obstacles=None, sun_vec=None, drift_vec=None, multi_seed=False)</dt><dd><span class="code">Check&nbsp;if&nbsp;particles&nbsp;are&nbsp;neighbouring&nbsp;seeds&nbsp;on&nbsp;the&nbsp;lattice.<br>
+If&nbsp;they&nbsp;are,&nbsp;place&nbsp;new&nbsp;seeds.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;particles&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;particle&nbsp;coordinates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;seeds&nbsp;and&nbsp;0's&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;prop_particles&nbsp;(float)&nbsp;-&nbsp;a&nbsp;number&nbsp;between&nbsp;0&nbsp;and&nbsp;1&nbsp;determining&nbsp;the&nbsp;percentage&nbsp;/&nbsp;density&nbsp;of&nbsp;particles&nbsp;on&nbsp;the&nbsp;lattice;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;None,&nbsp;the&nbsp;particles&nbsp;will&nbsp;not&nbsp;be&nbsp;regenerated&nbsp;to&nbsp;compensate&nbsp;the&nbsp;proportion<br>
+&nbsp;&nbsp;&nbsp;&nbsp;moore&nbsp;(bool)&nbsp;-&nbsp;determine&nbsp;whether&nbsp;the&nbsp;neighbourhood&nbsp;is&nbsp;Moore&nbsp;or&nbsp;otherwise&nbsp;von&nbsp;Neumann;&nbsp;defaults&nbsp;to&nbsp;False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;obstacles&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;obstacles&nbsp;and&nbsp;0's&nbsp;otherwise;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sun_vec&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;vector&nbsp;affecting&nbsp;the&nbsp;growth&nbsp;direction&nbsp;by&nbsp;prioritising&nbsp;neighbours&nbsp;aligned&nbsp;with&nbsp;its&nbsp;direction;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;its&nbsp;magnitude&nbsp;affects&nbsp;how&nbsp;focused/diffuse&nbsp;the&nbsp;sunlight&nbsp;is:&nbsp;&lt;&lt;&nbsp;1&nbsp;for&nbsp;diffuse,&nbsp;&gt;&gt;&nbsp;1&nbsp;for&nbsp;focused;&nbsp;defaults&nbsp;to&nbsp;[1,&nbsp;0]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;drift_vec&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;vector&nbsp;analogous&nbsp;to&nbsp;the&nbsp;drift&nbsp;vector&nbsp;in&nbsp;the&nbsp;move_particles_diffuse&nbsp;function;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;supplied,&nbsp;a&nbsp;particle&nbsp;regeneration&nbsp;at&nbsp;the&nbsp;boundary&nbsp;is&nbsp;assumed;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;multi_seed&nbsp;(bool)&nbsp;-&nbsp;determines&nbsp;whether&nbsp;to&nbsp;assign&nbsp;values&nbsp;to&nbsp;new&nbsp;aggregates&nbsp;based&nbsp;on&nbsp;the&nbsp;seed&nbsp;they&nbsp;stem&nbsp;from<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;seeds&nbsp;and&nbsp;0's&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;particles&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;particle&nbsp;coordinates</span></dd></dl>
+ <dl><dt><a name="-init_lattice"><strong>init_lattice</strong></a>(lattice_size, seed_coords)</dt><dd><span class="code">Creates&nbsp;a&nbsp;square&nbsp;lattice&nbsp;with&nbsp;initial&nbsp;seeds&nbsp;placed&nbsp;on&nbsp;specific&nbsp;sites.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_size&nbsp;(int)&nbsp;-&nbsp;the&nbsp;size&nbsp;of&nbsp;the&nbsp;lattice&nbsp;along&nbsp;one&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seed_coords&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;site&nbsp;coordinates&nbsp;for&nbsp;the&nbsp;placement&nbsp;of&nbsp;initial&nbsp;seeds<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;seeds&nbsp;and&nbsp;0's&nbsp;otherwise</span></dd></dl>
+ <dl><dt><a name="-init_obstacle_lattice"><strong>init_obstacle_lattice</strong></a>(lattice_size, boxes=None, seed_coords=None)</dt><dd><span class="code">Create&nbsp;lattice&nbsp;where&nbsp;0&nbsp;determines&nbsp;free&nbsp;space&nbsp;and&nbsp;1&nbsp;determines&nbsp;an&nbsp;obstacle.&nbsp;<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_size&nbsp;(int)&nbsp;-&nbsp;the&nbsp;size&nbsp;of&nbsp;the&nbsp;lattice&nbsp;along&nbsp;one&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;boxes&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;2D&nbsp;array&nbsp;containing&nbsp;the&nbsp;diagonal&nbsp;corner&nbsp;points&nbsp;of&nbsp;rectangular&nbsp;obstacles&nbsp;in&nbsp;a&nbsp;flattened&nbsp;form&nbsp;(e.g.&nbsp;x1,&nbsp;x2,&nbsp;y1,&nbsp;y2,&nbsp;...).&nbsp;Defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seed_coords&nbsp;(np.ndarray)&nbsp;-&nbsp;the&nbsp;lattice&nbsp;coordinates&nbsp;of&nbsp;the&nbsp;initial&nbsp;seeds,&nbsp;used&nbsp;to&nbsp;check&nbsp;if&nbsp;seeds&nbsp;are&nbsp;in&nbsp;obstacles;&nbsp;defaults&nbsp;to&nbsp;None<br>
+output:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;obstacle_lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;the&nbsp;obstacle&nbsp;lattice&nbsp;(np.ndarray)</span></dd></dl>
+ <dl><dt><a name="-init_particles"><strong>init_particles</strong></a>(lattice, prop_particles, obstacles=None)</dt><dd><span class="code">Creates&nbsp;an&nbsp;array&nbsp;of&nbsp;n-dimensional&nbsp;particles&nbsp;where&nbsp;the&nbsp;number&nbsp;of&nbsp;particles<br>
+is&nbsp;determined&nbsp;by&nbsp;a&nbsp;proportion&nbsp;from&nbsp;an&nbsp;input&nbsp;lattice&nbsp;size.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;seeds&nbsp;and&nbsp;0's&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;prop_particles&nbsp;(float)&nbsp;-&nbsp;a&nbsp;number&nbsp;between&nbsp;0&nbsp;and&nbsp;1&nbsp;determining&nbsp;the&nbsp;percentage&nbsp;/&nbsp;density&nbsp;of&nbsp;particles&nbsp;on&nbsp;the&nbsp;lattice<br>
+&nbsp;&nbsp;&nbsp;&nbsp;obstacles&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;obstacles&nbsp;and&nbsp;0's&nbsp;otherwise<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;init_coords&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;particle&nbsp;coordinates</span></dd></dl>
+ <dl><dt><a name="-init_seeds_bottom"><strong>init_seeds_bottom</strong></a>(lattice_size, n_seeds, n_dims=2)</dt><dd><span class="code">Creates&nbsp;equally&nbsp;spaced&nbsp;seeds&nbsp;along&nbsp;a&nbsp;line&nbsp;at&nbsp;the&nbsp;bottom&nbsp;of&nbsp;the&nbsp;lattice.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_size&nbsp;(int)&nbsp;-&nbsp;size&nbsp;of&nbsp;the&nbsp;side&nbsp;of&nbsp;the&nbsp;lattice&nbsp;square&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_seeds&nbsp;(int)&nbsp;-&nbsp;the&nbsp;amount&nbsp;of&nbsp;seeds&nbsp;to&nbsp;generate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_dims&nbsp;(int)&nbsp;-&nbsp;the&nbsp;dimensions&nbsp;of&nbsp;the&nbsp;lattice;&nbsp;defaults&nbsp;to&nbsp;2<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seed_coords&nbsp;(np.array)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;site&nbsp;coordinates&nbsp;for&nbsp;the&nbsp;placement&nbsp;of&nbsp;initial&nbsp;seeds</span></dd></dl>
+ <dl><dt><a name="-move_particles_diffuse"><strong>move_particles_diffuse</strong></a>(particles_in, lattice, periodic=(False, True), moore=False, obstacles=None, drift_vec=None, regen_bndry=True)</dt><dd><span class="code">Petrurbs&nbsp;the&nbsp;particles&nbsp;in&nbsp;init_array&nbsp;using&nbsp;a&nbsp;Random&nbsp;Walk.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;particles_in&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;coordinates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;seeds&nbsp;and&nbsp;0's&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;periodic&nbsp;(tuple&nbsp;of&nbsp;bool)&nbsp;-&nbsp;defines&nbsp;whether&nbsp;the&nbsp;lattice&nbsp;is&nbsp;periodic&nbsp;in&nbsp;each&nbsp;dimension,&nbsp;number&nbsp;of&nbsp;elements&nbsp;must&nbsp;correspond&nbsp;to&nbsp;dimensions<br>
+&nbsp;&nbsp;&nbsp;&nbsp;moore&nbsp;(bool)&nbsp;-&nbsp;determine&nbsp;whether&nbsp;the&nbsp;particles&nbsp;move&nbsp;in&nbsp;a&nbsp;Moore&nbsp;neighbourhood<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;otherwise&nbsp;in&nbsp;a&nbsp;von&nbsp;Neumann&nbsp;neighbourhood;&nbsp;defaults&nbsp;to&nbsp;False<br>
+&nbsp;&nbsp;&nbsp;&nbsp;obstacles&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;obstacles&nbsp;and&nbsp;0's&nbsp;otherwise;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;drift_vec&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;vector&nbsp;affecting&nbsp;the&nbsp;drift&nbsp;probabilities&nbsp;for&nbsp;each&nbsp;direction&nbsp;based&nbsp;on&nbsp;dot-product&nbsp;alignment;&nbsp;defaults&nbsp;to&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;regen_bndry&nbsp;(bool)&nbsp;-&nbsp;determines&nbsp;whether&nbsp;particles&nbsp;regenerate&nbsp;at&nbsp;the&nbsp;boundary&nbsp;or&nbsp;otherwise&nbsp;anywhere&nbsp;in&nbsp;space;&nbsp;defaults&nbsp;to&nbsp;True<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;particles_out&nbsp;(np.ndarray)&nbsp;-&nbsp;the&nbsp;particle&nbsp;array&nbsp;after&nbsp;one&nbsp;step</span></dd></dl>
+ <dl><dt><a name="-particles_to_lattice"><strong>particles_to_lattice</strong></a>(particles, lattice_size)</dt><dd><span class="code">Projects&nbsp;the&nbsp;particle&nbsp;coordinates&nbsp;on&nbsp;a&nbsp;lattice,<br>
+returning&nbsp;a&nbsp;grid&nbsp;with&nbsp;1's&nbsp;where&nbsp;there&nbsp;is&nbsp;a&nbsp;particle&nbsp;and&nbsp;0's&nbsp;otherwise</span></dd></dl>
+ <dl><dt><a name="-regen_particles"><strong>regen_particles</strong></a>(lattice, n_particles, bndry_weights=None, obstacles=None)</dt><dd><span class="code">Randomly&nbsp;regenerate&nbsp;a&nbsp;specific&nbsp;number&nbsp;of&nbsp;particles.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;seeds&nbsp;and&nbsp;0's&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_particles&nbsp;(int)&nbsp;-&nbsp;the&nbsp;number&nbsp;of&nbsp;particles&nbsp;to&nbsp;regenerate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bndry_weights&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;probabilities&nbsp;for&nbsp;regenerating&nbsp;particles&nbsp;at&nbsp;the&nbsp;boundaries&nbsp;in&nbsp;each&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;obstacles&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;lattice&nbsp;sites&nbsp;containing&nbsp;1's&nbsp;where&nbsp;there&nbsp;are&nbsp;obstacles&nbsp;and&nbsp;0's&nbsp;otherwise;&nbsp;defaults&nbsp;to&nbsp;None<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;regen_coords&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;regenerated&nbsp;particle&nbsp;coordinates</span></dd></dl>
+ <dl><dt><a name="-regen_probabilities"><strong>regen_probabilities</strong></a>(nbr_coords, nbr_weights)</dt><dd><span class="code">Create&nbsp;boundary&nbsp;regeneration&nbsp;probabilities&nbsp;based&nbsp;on&nbsp;neighbourhood&nbsp;weights<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nbr_coords&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;neighbourhood&nbsp;coordinates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nbr_weights&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;neighbourhood&nbsp;weights<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bndry_weights&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;probabilities&nbsp;for&nbsp;regenerating&nbsp;particles&nbsp;at&nbsp;the&nbsp;boundaries&nbsp;in&nbsp;each&nbsp;dimension</span></dd></dl>
+</td></tr></table>
+</body></html>

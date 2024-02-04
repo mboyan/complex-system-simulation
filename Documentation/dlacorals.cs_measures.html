@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module dlacorals.cs_measures</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="dlacorals.html" class="white">dlacorals</a>.cs_measures</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="file:c%3A%5Cusers%5Cmihbo%5Canaconda3%5Clib%5Csite-packages%5Cdlacorals%5Ccs_measures.py">c:\users\mihbo\anaconda3\lib\site-packages\dlacorals\cs_measures.py</a></td></tr></table>
+    <p><span class="code">This&nbsp;module&nbsp;contains&nbsp;functions&nbsp;for&nbsp;calculating&nbsp;various&nbsp;complex&nbsp;systems&nbsp;measures.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+    
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="math.html">math</a><br>
+</td><td class="multicolumn"><a href="numpy.html">numpy</a><br>
+</td><td class="multicolumn"><a href="networkx.html">networkx</a><br>
+</td><td class="multicolumn"><a href="powerlaw.html">powerlaw</a><br>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+    
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-branch_distribution"><strong>branch_distribution</strong></a>(lattice_array, seed_coords, moore=False, verify_plaw=False)</dt><dd><span class="code">Computes&nbsp;the&nbsp;branch&nbsp;distribution&nbsp;of&nbsp;a&nbsp;DLA&nbsp;structure&nbsp;by&nbsp;tracing&nbsp;the&nbsp;shortest&nbsp;paths<br>
+from&nbsp;the&nbsp;branch&nbsp;tips&nbsp;to&nbsp;the&nbsp;seed&nbsp;point,&nbsp;identifying&nbsp;the&nbsp;membership&nbsp;of&nbsp;a&nbsp;lattice&nbsp;site<br>
+to&nbsp;a&nbsp;specific&nbsp;branch&nbsp;by&nbsp;the&nbsp;number&nbsp;of&nbsp;paths&nbsp;that&nbsp;pass&nbsp;through&nbsp;it&nbsp;and&nbsp;counting&nbsp;the&nbsp;number<br>
+of&nbsp;branches&nbsp;of&nbsp;different&nbsp;lengths.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_array&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;lattice&nbsp;grid&nbsp;where&nbsp;non-zero&nbsp;values&nbsp;represent&nbsp;occupied&nbsp;lattice&nbsp;sites<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seed_coords&nbsp;(tuple)&nbsp;-&nbsp;the&nbsp;coordinates&nbsp;of&nbsp;the&nbsp;seed&nbsp;point<br>
+&nbsp;&nbsp;&nbsp;&nbsp;moore&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;use&nbsp;the&nbsp;Moore&nbsp;neighborhood&nbsp;(8-connected)&nbsp;or&nbsp;the&nbsp;Von&nbsp;Neumann&nbsp;neighborhood&nbsp;(4-connected);&nbsp;default&nbsp;is&nbsp;Von&nbsp;Neumann<br>
+&nbsp;&nbsp;&nbsp;&nbsp;verify_plaw&nbsp;(bool)&nbsp;-&nbsp;when&nbsp;True,&nbsp;verifies&nbsp;whether&nbsp;the&nbsp;branch&nbsp;length&nbsp;distribution&nbsp;follows&nbsp;a&nbsp;power&nbsp;law&nbsp;distribution;&nbsp;default&nbsp;is&nbsp;False<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branch_lengths_unique&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;unique&nbsp;branch&nbsp;lengths<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branch_length_counts&nbsp;(np.ndarray)&nbsp;-&nbsp;an&nbsp;array&nbsp;of&nbsp;corresponding&nbsp;branch&nbsp;length&nbsp;counts<br>
+&nbsp;&nbsp;&nbsp;&nbsp;branches&nbsp;(list)&nbsp;-&nbsp;a&nbsp;list&nbsp;of&nbsp;lists&nbsp;of&nbsp;nodes&nbsp;(tuples)&nbsp;representing&nbsp;the&nbsp;branches&nbsp;of&nbsp;a&nbsp;DLA&nbsp;cluster</span></dd></dl>
+ <dl><dt><a name="-fractal_dimension_clusters"><strong>fractal_dimension_clusters</strong></a>(lattice_array, fit=False)</dt><dd><span class="code">Calculate&nbsp;the&nbsp;Minkowski&nbsp;dimension&nbsp;(box-counting&nbsp;method)&nbsp;of&nbsp;a&nbsp;structure&nbsp;on&nbsp;a&nbsp;lattice<br>
+by&nbsp;clustering&nbsp;regions&nbsp;of&nbsp;cells&nbsp;with&nbsp;varying&nbsp;sizes&nbsp;and&nbsp;counting&nbsp;the&nbsp;number&nbsp;of&nbsp;clusters<br>
+containing&nbsp;non-negative&nbsp;cells.&nbsp;Performs&nbsp;a&nbsp;linear&nbsp;regression&nbsp;on&nbsp;the&nbsp;log-log&nbsp;plot&nbsp;of<br>
+number&nbsp;of&nbsp;clusters&nbsp;vs&nbsp;cluster&nbsp;size&nbsp;to&nbsp;determine&nbsp;the&nbsp;fractal&nbsp;dimension.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lattice_array&nbsp;(np.ndarray)&nbsp;-&nbsp;represents&nbsp;a&nbsp;lattice&nbsp;with&nbsp;equal&nbsp;measure&nbsp;in&nbsp;each&nbsp;dimension&nbsp;(should&nbsp;be&nbsp;a&nbsp;power&nbsp;of&nbsp;2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fit&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;perform&nbsp;a&nbsp;linear&nbsp;regression&nbsp;on&nbsp;the&nbsp;log-log&nbsp;plot&nbsp;of&nbsp;number&nbsp;of&nbsp;clusters&nbsp;vs&nbsp;inverse&nbsp;cluster&nbsp;size;&nbsp;defaults&nbsp;to&nbsp;False<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dim_box_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;box&nbsp;dimensions<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_box_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;occupied&nbsp;box&nbsp;counts<br>
+&nbsp;&nbsp;&nbsp;&nbsp;scale_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;box&nbsp;sizes<br>
+&nbsp;&nbsp;&nbsp;&nbsp;coeffs&nbsp;(np.ndarray)&nbsp;-&nbsp;the&nbsp;coefficients&nbsp;of&nbsp;the&nbsp;linear&nbsp;regression</span></dd></dl>
+ <dl><dt><a name="-fractal_dimension_radius"><strong>fractal_dimension_radius</strong></a>(radius_series, n_box_series, fit=False)</dt><dd><span class="code">Calculate&nbsp;the&nbsp;Minkowski&nbsp;dimension&nbsp;(box-counting&nbsp;method)&nbsp;of&nbsp;a&nbsp;DLA&nbsp;structure&nbsp;by<br>
+taking&nbsp;the&nbsp;maximum&nbsp;radius&nbsp;of&nbsp;the&nbsp;structure&nbsp;from&nbsp;the&nbsp;initial&nbsp;seed&nbsp;point&nbsp;as&nbsp;a&nbsp;scale&nbsp;reference.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;radius_series&nbsp;(ndarray&nbsp;of&nbsp;float)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;maximum&nbsp;radii&nbsp;from&nbsp;the&nbsp;initial&nbsp;seed&nbsp;point,&nbsp;representing&nbsp;different&nbsp;scales<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_box_series&nbsp;(ndarray&nbsp;of&nbsp;int)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;occupied&nbsp;box&nbsp;counts&nbsp;corresponding&nbsp;to&nbsp;the&nbsp;radius&nbsp;series<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fit&nbsp;(bool)&nbsp;-&nbsp;whether&nbsp;to&nbsp;perform&nbsp;a&nbsp;linear&nbsp;regression&nbsp;on&nbsp;the&nbsp;log-log&nbsp;plot&nbsp;of&nbsp;number&nbsp;of&nbsp;clusters&nbsp;vs&nbsp;radius;&nbsp;defaults&nbsp;to&nbsp;False<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dim_box_series&nbsp;(np.ndarray&nbsp;of&nbsp;float)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;box&nbsp;dimensions<br>
+&nbsp;&nbsp;&nbsp;&nbsp;coeffs&nbsp;(np.ndarray&nbsp;of&nbsp;float)&nbsp;-&nbsp;the&nbsp;coefficients&nbsp;of&nbsp;the&nbsp;linear&nbsp;regression</span></dd></dl>
+ <dl><dt><a name="-linreg_fdim"><strong>linreg_fdim</strong></a>(scale_series, n_box_series)</dt><dd><span class="code">Perform&nbsp;linear&nbsp;regression&nbsp;on&nbsp;the&nbsp;log-log&nbsp;plot&nbsp;of&nbsp;the&nbsp;fractal&nbsp;dimension&nbsp;results<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;scale_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;scale&nbsp;factors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n_box_series&nbsp;(np.ndarray)&nbsp;-&nbsp;a&nbsp;series&nbsp;of&nbsp;occupied&nbsp;box&nbsp;counts<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;coeffs&nbsp;(np.ndarray)&nbsp;-&nbsp;the&nbsp;coefficients&nbsp;of&nbsp;the&nbsp;linear&nbsp;regression</span></dd></dl>
+ <dl><dt><a name="-verify_power_law"><strong>verify_power_law</strong></a>(data)</dt><dd><span class="code">Verifies&nbsp;whether&nbsp;a&nbsp;dataset&nbsp;follows&nbsp;a&nbsp;power&nbsp;law&nbsp;distribution&nbsp;by&nbsp;fitting&nbsp;a&nbsp;power&nbsp;law&nbsp;function<br>
+and&nbsp;comparing&nbsp;it&nbsp;to&nbsp;an&nbsp;exponential&nbsp;one.<br>
+inputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;data&nbsp;(list)&nbsp;-&nbsp;a&nbsp;list&nbsp;of&nbsp;data&nbsp;points<br>
+outputs:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;loglikelihood&nbsp;(float)&nbsp;-&nbsp;the&nbsp;log-likelihood&nbsp;of&nbsp;the&nbsp;power&nbsp;law&nbsp;fit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;p_value&nbsp;(float)&nbsp;-&nbsp;the&nbsp;p-value&nbsp;of&nbsp;the&nbsp;power&nbsp;law&nbsp;fit</span></dd></dl>
+</td></tr></table>
+</body></html>
