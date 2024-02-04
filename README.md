@@ -44,7 +44,9 @@ https://github.com/mboyan/complex-system-simulation/assets/29741948/8cfe2fe6-c0c
 
 ### Python Module
 
-The framework is also uploaded as a module on PyPi (https://pypi.org/project/dlacorals/)
+The framework is also uploaded as a module on PyPi (https://pypi.org/project/dlacorals/). To install it run the following from the command line:
+
+`pip install dlacorals`
 
 ### Prerequisites
 
