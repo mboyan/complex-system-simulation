@@ -25,7 +25,8 @@ def init_seeds_bottom(lattice_size, n_seeds, n_dims=2):
     x_coords = np.delete(np.arange(0, n_seeds + 1), 0) * int(lattice_size/(n_seeds + 1))
 
     # Set last coordinate to zero, the rest to half the lattice
-    rest_coords = np.repeat((int(0.5*lattice_size), 0), (n_dims - 2, 1))[:, np.newaxis]
+    rest_coords = np.repeat((0, int(0.5*lattice_size)), (1, n_dims - 2))[:, np.newaxis]
+    rest_coords = np.repeat(rest_coords, n_seeds, axis=1) # repeat for the amount of seeds
     
     seed_coords = np.insert(rest_coords, 0, x_coords.reshape((1, -1)), axis=0).T
 
