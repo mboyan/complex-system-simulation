@@ -41,6 +41,9 @@ A more detailed explanation of the code can be found, together with a documentat
 https://github.com/mboyan/complex-system-simulation/assets/29741948/8cfe2fe6-c0c4-40e4-9753-c148ec806d5b
 
 
+### Python Module
+
+The framework is also uploaded as a module on PyPi (https://pypi.org/project/dlacorals/)
 
 ### Prerequisites
 
