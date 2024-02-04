@@ -87,7 +87,7 @@ def plot_lattice_3D(lattice, cmap='tab20b', ax=None, title=None):
     else:
         ax.set_title("DLA cluster", fontsize='small')
 
-    # plt.axis('off')
+    plt.axis('off')
 
     if ax is None:
         plt.show()
