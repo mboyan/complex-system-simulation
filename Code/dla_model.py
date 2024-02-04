@@ -83,9 +83,6 @@ def init_obstacle_lattice(lattice_size, boxes=None, seed_coords=None):
     if np.any(obstacle_lattice[tuple(seed_coords.T)] == 1):
         print("At least one seed is inside an obstacle")
 
-    # Maybe not necessary, might delete later
-    # obstacle_locs = np.argwhere(obstacle_lattice == 1)
-
     return obstacle_lattice
 
 
@@ -110,15 +107,7 @@ def init_particles(lattice, prop_particles, obstacles=None):
     # Determine number of particles=
     n_particles = int(empty_locs.shape[0] * prop_particles)
 
-    # if gravity:
-    #     # Initialize particles in the top of the grid
-    #     top = 2 * prop_particles
-    #     init_coords = empty_locs[np.random.choice(int(top * empty_locs.shape[0]), size=n_particles, replace=False)]
-
-    # else:
-    #     # Initialize particles randomly wherever there are no seeds
-    #     init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
-    
+    # Randomly generate particle coordinates    
     init_coords = empty_locs[np.random.choice(empty_locs.shape[0], size=n_particles, replace=False)]
 
     return init_coords

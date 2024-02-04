@@ -443,16 +443,16 @@ def analyse_environmental_params(sim_results_param, growth = False, fdr=False, f
     input:
         - sim_results_param (np.array): the results of multiple runs of the simulation for the specific value of 
             a parameter.
-        - growth (Boolean): whether the speed of growth (1) is given as output.
-        - fdr (Boolean): whether the fractal dimension using radius scale (2) is given as output.
-        - fdc (Boolean): whether the fractal dimension using coarse graining scale (3) is given as output.
-        - branch (Boolean): whether the slope the power law fitted to the branch sizes (4) is given as output.
+        - growth (Bool) - whether the speed of growth (1) is given as output.
+        - fdr (Bool) - whether the fractal dimension using radius scale (2) is given as output.
+        - fdc (Bool) - whether the fractal dimension using coarse graining scale (3) is given as output.
+        - branch (Bool) - whether the slope the power law fitted to the branch sizes (4) is given as output.
     
     output:
-        - growth_series_mean (float): the average amount of time steps before the target mass is reached.
-        - fdr (float): fractal dimension determined with radius scale 
-        - fdc (float): fractal dimension determined with coarse-graining scale
-        - slope (float): slope of the power law fitted to the branch sizes
+        - growth_series_mean (float) - the average amount of time steps before the target mass is reached.
+        - fdr (float) - fractal dimension determined with radius scale 
+        - fdc (float) - fractal dimension determined with coarse-graining scale
+        - slope (float) - slope of the power law fitted to the branch sizes
     """
     # 1. Speed of growth (time steps needed to reach target mass)
     if growth:
@@ -505,12 +505,12 @@ def plot_environmental_results(param, sim_results, drift_vec_angle = False, grow
     """
     Plots the results of changes in the environmental measures.
     inputs:
-        - param (string): one of four different environmental parameters (sun, drift angle, drift magnitude, nutrient density)
-        - sim_results (pd dataframe): simulation results where the value of param is changed
-        - drift_vec_angle (Bool): when the drift vector is changed, this input is used to tell whether the angle is changed (or magnitude)
-        - growth (Bool): whether you want to plot the speed of growth output plot
-        - fd (Bool): whether you want the fractal dimension plot
-        - branch (Bool): whether you want the plot that shows how the powerlaw exponent changes for different param values
+        - param (string) - one of four different environmental parameters (sun, drift angle, drift magnitude, nutrient density)
+        - sim_results (pd dataframe) - simulation results where the value of param is changed
+        - drift_vec_angle (Bool) - when the drift vector is changed, this input is used to tell whether the angle is changed (or magnitude)
+        - growth (Bool) - whether you want to plot the speed of growth output plot
+        - fd (Bool) - whether you want the fractal dimension plot
+        - branch (Bool) - whether you want the plot that shows how the powerlaw exponent changes for different param values
     
     """
     assert param == 'drift_vec' or param == 'sun_vec' or param == 'particle_density', 'param must be a string and either drift_vec, sun_vec or particle_density'
@@ -580,6 +580,19 @@ def plot_environmental_results(param, sim_results, drift_vec_angle = False, grow
 
 
 def env_param_plot(x_values, y_values, x_label, y_label, color, title = False, x_log = False, label = False, legend = False):
+    """
+    Plot font settings and plot the environmental parameter results
+    inputs:
+        - x_values (np.array) - the x values
+        - y_values (np.array) - the y values
+        - x_label (string) - the label of the x axis
+        - y_label (string) - the label of the y axis
+        - color (string) - the color of the plot
+        - title (False or string) - the title of the plot
+        - x_log (Bool) - whether the x axis should be logarithmic
+        - label (False or string) - the label of the plot
+        - legend (Bool) - whether you want to plot a legend
+    """
     plt.plot(x_values, y_values, color = color, label = label)
     plt.tick_params(labelsize= 15)
     plt.xlabel(x_label, fontsize = 17)
