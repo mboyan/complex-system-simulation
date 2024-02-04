@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dlacorals"
+version = "2024.0.0"
+authors = [
+  { name="Boyan Mihaylov", email="mboyo@duck.com" },
+  { name="Loes Bijman", email="loesbijman@gmail.com" },
+  { name="Esther Bakels", email="esther.bakels@gmail.com" },
+  { name="Aleksander Jacimovic", email="a.s.jacimovic@gmail.com" },
+]
+description = "DLA model for simulating coral growth"
+readme = "README.md"
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ["DLA", "diffusion limited aggregation", "corals", "complex system", "fractal"]
+
+[project.urls]
+Homepage = "https://github.com/mboyan/complex-system-simulation"
+Issues = "https://github.com/mboyan/complex-system-simulation/issues"

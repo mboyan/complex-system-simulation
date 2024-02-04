@@ -3,9 +3,6 @@
 
 This repository contains the Python framework for modelling coral growth using Diffusion Limited Aggregation (DLA)<sup>11</sup>. It was constructed during a two-week university project for the course Complex System Simulation in January 2024.
 
-![background_base](https://github.com/mboyan/complex-system-simulation/blob/boyan-final-cleanup/Images/background_base_cropped.png)
-
-
 ### Introduction
 [Corals](https://kids.frontiersin.org/articles/10.3389/frym.2019.00143) are colonial marine organisms of great environmental importance.
 Understanding their behaviour, morphogenesis and lifecycle are essential for their preservation.
