@@ -36,6 +36,12 @@ The code is structured in four .py modules. The DLA model containing all functio
 
 A more detailed explanation of the code can be found, together with a documentation of the experimental process, in the [Project Notebook](https://github.com/mboyan/complex-system-simulation/blob/main/Code/ProjectNotebook.ipynb).
 
+
+
+https://github.com/mboyan/complex-system-simulation/assets/29741948/8cfe2fe6-c0c4-40e4-9753-c148ec806d5b
+
+
+
 ### Prerequisites
 
 The code makes use of the following packages:
