@@ -42,6 +42,8 @@ def plot_lattice_2D(lattice, cmap='tab20b', ax=None, title=None, cell_size=1):
     else:
         ax.set_title("DLA cluster", fontsize='small')
 
+    plt.axis('off')
+
     if ax is None:
         plt.show()
 
@@ -84,6 +86,8 @@ def plot_lattice_3D(lattice, cmap='tab20b', ax=None, title=None):
         ax.set_title(title, fontsize='small')
     else:
         ax.set_title("DLA cluster", fontsize='small')
+
+    plt.axis('off')
 
     if ax is None:
         plt.show()
