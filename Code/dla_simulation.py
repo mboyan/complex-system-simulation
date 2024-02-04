@@ -417,7 +417,7 @@ def analyse_sim_results(sim_results, plot_mass=True, plot_fdr=True, plot_fdc=Tru
             # Flatten lists
             branch_lengths_flat = np.array([length for b in branch_lengths for length in b])
             branch_length_ct_flat = np.array([count for b in branch_length_counts for count in b])
-            branches_flat = np.array([branch for b in branches for branch in b])
+            branches_flat = [branch for b in branches for branch in b]
 
             # Take the average branch length counts over simulations
             branch_lengths_unique = np.unique(branch_lengths_flat)
