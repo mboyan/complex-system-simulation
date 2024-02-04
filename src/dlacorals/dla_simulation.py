@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 from itertools import product
 import math
 import scipy.stats as stat
-
-import dla_model as dm
-import cs_measures as csm
-import vis_tools as vt
 import powerlaw as pl
+
+from . import dla_model as dm
+from . import cs_measures as csm
+from . import vis_tools as vt
 
 def run_dla(lattice_size, max_timesteps, particle_density, n_seeds=int(1), target_mass=None, drift_vec=np.array([0,-1]), sun_vec=np.array([0,-1]), obstacle_boxes=None, **sim_params):
     """

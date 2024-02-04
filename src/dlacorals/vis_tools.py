@@ -9,7 +9,7 @@ import seaborn as sns
 from matplotlib import animation
 from IPython.display import HTML
 
-import cs_measures as csm
+from . import cs_measures as csm
 
 def plot_lattice_2D(lattice, cmap='tab20b', ax=None, title=None, cell_size=1):
     """

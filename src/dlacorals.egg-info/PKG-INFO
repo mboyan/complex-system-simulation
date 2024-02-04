@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: dlacorals
-Version: 2024.0.0
+Version: 2024.0.1
 Summary: DLA model for simulating coral growth
 Author-email: Boyan Mihaylov <mboyo@duck.com>, Loes Bijman <loesbijman@gmail.com>, Esther Bakels <esther.bakels@gmail.com>, Aleksander Jacimovic <a.s.jacimovic@gmail.com>
 Project-URL: Homepage, https://github.com/mboyan/complex-system-simulation
