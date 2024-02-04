@@ -39,6 +39,8 @@ def init_lattice(lattice_size, seed_coords):
     inputs:
         lattice_size (int) - the size of the lattice along one dimension
         seed_coords (np.ndarray) - an array of lattice site coordinates for the placement of initial seeds
+    outputs:
+        lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
     """
 
     # Infer dimensions from number of seed coordinates
@@ -62,7 +64,7 @@ def init_obstacle_lattice(lattice_size, boxes=None, seed_coords=None):
         boxes (np.ndarray) - a 2D array containing the diagonal corner points of rectangular obstacles in a flattened form (e.g. x1, x2, y1, y2, ...). Defaults to None
         seed_coords (np.ndarray) - the lattice coordinates of the initial seeds, used to check if seeds are in obstacles; defaults to None
     output:
-        the obstacle lattice (np.ndarray) and the coordinates of the obstacle (np.ndarray)
+        obstacle_lattice (np.ndarray) - the obstacle lattice (np.ndarray)
     """
 
     # Infer dimensions from number of seed coordinates
@@ -124,6 +126,8 @@ def regen_particles(lattice, n_particles, bndry_weights=None, obstacles=None):
         n_particles (int) - the number of particles to regenerate
         bndry_weights (np.ndarray) - an array of probabilities for regenerating particles at the boundaries in each dimension
         obstacles (np.ndarray) - an array of lattice sites containing 1's where there are obstacles and 0's otherwise; defaults to None
+    outputs:
+        regen_coords (np.ndarray) - an array of regenerated particle coordinates
     """
     
     lattice_dims = np.ndim(lattice)
@@ -206,7 +210,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
     """
     Petrurbs the particles in init_array using a Random Walk.
     inputs:
-        particles_in (numpy.ndarray) - an array of coordinates
+        particles_in (np.ndarray) - an array of coordinates
         lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
         periodic (tuple of bool) - defines whether the lattice is periodic in each dimension, number of elements must correspond to dimensions
         moore (bool) - determine whether the particles move in a Moore neighbourhood
@@ -215,7 +219,7 @@ def move_particles_diffuse(particles_in, lattice, periodic=(False, True), moore=
         drift_vec (np.ndarray) - a vector affecting the drift probabilities for each direction based on dot-product alignment; defaults to None
         regen_bndry (bool) - determines whether particles regenerate at the boundary or otherwise anywhere in space; defaults to True
     outputs:
-        the particle array after one step (numpy.ndarray)
+        particles_out (np.ndarray) - the particle array after one step
     """
 
     lattice_dims = np.ndim(lattice)
@@ -304,6 +308,10 @@ def aggregate_particles(particles, lattice, prop_particles=None, moore=False, ob
             its magnitude affects how focused/diffuse the sunlight is: << 1 for diffuse, >> 1 for focused; defaults to [1, 0]
         drift_vec (np.ndarray) - a vector analogous to the drift vector in the move_particles_diffuse function;
             if supplied, a particle regeneration at the boundary is assumed; defaults to None
+        multi_seed (bool) - determines whether to assign values to new aggregates based on the seed they stem from
+    outputs:
+        lattice (np.ndarray) - an array of lattice sites containing 1's where there are seeds and 0's otherwise
+        particles (np.ndarray) - an array of particle coordinates
     """
 
     # Create a copy of the lattice

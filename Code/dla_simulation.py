@@ -505,12 +505,12 @@ def plot_environmental_results(param, sim_results, drift_vec_angle = False, grow
     """
     Plots the results of changes in the environmental measures.
     inputs:
-        - param (string) - one of four different environmental parameters (sun, drift angle, drift magnitude, nutrient density)
+        - param (str) - one of four different environmental parameters (sun, drift angle, drift magnitude, nutrient density)
         - sim_results (pd dataframe) - simulation results where the value of param is changed
-        - drift_vec_angle (Bool) - when the drift vector is changed, this input is used to tell whether the angle is changed (or magnitude)
-        - growth (Bool) - whether you want to plot the speed of growth output plot
-        - fd (Bool) - whether you want the fractal dimension plot
-        - branch (Bool) - whether you want the plot that shows how the powerlaw exponent changes for different param values
+        - drift_vec_angle (bool) - when the drift vector is changed, this input is used to tell whether the angle is changed (or magnitude)
+        - growth (bool) - whether you want to plot the speed of growth output plot
+        - fd (bool) - whether you want the fractal dimension plot
+        - branch (bool) - whether you want the plot that shows how the powerlaw exponent changes for different param values
     
     """
     assert param == 'drift_vec' or param == 'sun_vec' or param == 'particle_density', 'param must be a string and either drift_vec, sun_vec or particle_density'
@@ -585,13 +585,13 @@ def env_param_plot(x_values, y_values, x_label, y_label, color, title = False, x
     inputs:
         - x_values (np.array) - the x values
         - y_values (np.array) - the y values
-        - x_label (string) - the label of the x axis
-        - y_label (string) - the label of the y axis
-        - color (string) - the color of the plot
+        - x_label (str) - the label of the x axis
+        - y_label (str) - the label of the y axis
+        - color (str) - the color of the plot
         - title (False or string) - the title of the plot
-        - x_log (Bool) - whether the x axis should be logarithmic
-        - label (False or string) - the label of the plot
-        - legend (Bool) - whether you want to plot a legend
+        - x_log (bool) - whether the x axis should be logarithmic
+        - label (False or str) - the label of the plot
+        - legend (bool) - whether you want to plot a legend
     """
     plt.plot(x_values, y_values, color = color, label = label)
     plt.tick_params(labelsize= 15)
