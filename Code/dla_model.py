@@ -79,7 +79,7 @@ def init_obstacle_lattice(lattice_size, boxes=None, seed_coords=None):
     if boxes is not None:
         # Create slices from the box coordinates and assign 1s to the obstacle lattice at these slices
         for i in range(0, boxes.shape[0]):
-            slices = tuple([slice(boxes[i, j], boxes[i, j+lattice_dims]+1) for j in range(lattice_dims)])
+            slices = tuple([slice(boxes[i, 2*j], boxes[i, 2*j+1]+1) for j in range(lattice_dims)])
             obstacle_lattice[slices] = 1
 
     # Check if there is a seed in the obstacle
