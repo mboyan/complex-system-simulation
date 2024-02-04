@@ -35,6 +35,7 @@ Given the short time frame of the course, we aimed to produce a toy model which 
 The code is structured in four .py modules. The DLA model containing all functions defining the movement, aggregation, initialisation and regeneration of particles can be found in `dla_model.py`. The analysis of the fractal dimension and the branch distribution of DLA-generated "corals" are designated functions in `cs_measures.py`. The experimental setups for executing the simulations and analysing the results are defined as functions in `dla_simulation.py`. Matplotlib functions tend to create a bit of a mess, which is why most of the plotting procedures are contained in a separate module, `vis_tools.py`.
 
 A more detailed explanation of the code can be found, together with a documentation of the experimental process, in the [Project Notebook](https://github.com/mboyan/complex-system-simulation/blob/main/Code/ProjectNotebook.ipynb).
+A more concise documentation of all functions can be found in the [Documentation](https://github.com/mboyan/complex-system-simulation/tree/main/Documentation) directory.
 
 
 
